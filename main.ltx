@@ -1,0 +1,109 @@
+
+\documentclass[a4paper,12pt]{article}
+
+\usepackage{cmap}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+
+\usepackage[a4paper,margin=1cm,footskip=.5cm,left=2cm,right=1.5cm,top=1.5cm,bottom=1.5cm]{geometry}
+\usepackage{textcase}
+\usepackage{csquotes}
+\usepackage{enumitem}
+\setlist[description]{leftmargin=\parindent,labelindent=\parindent}
+
+\begin{document}
+
+\begin{titlepage}
+
+	\begin{center}
+		\MakeTextUppercase{ Министерство образования и науки Российской Федерации }
+		\bigbreak
+		ФЕДЕРАЛЬНОЕ ГОСУДАРСТВЕННОЕ БЮДЖЕТНОЕ ОБРАЗОВАТЕЛЬНОЕ УЧРЕЖДЕНИЕ ВЫСШЕГО ОБРАЗОВАНИЯ
+		\bigbreak
+		\MakeTextUppercase{\enquote{Новосибирский государственный технический университет}}
+		\bigbreak\bigbreak
+
+		Кафедра теоретической и прикладной информатики
+
+		\vspace{200pt}
+
+		\textbf{\LARGE{Отчет по}\\}
+		\bigbreak
+		учебной практике: \\практике по получению первичных профессиональных умений и навыков
+
+		\vspace{150pt}
+	\end{center}
+
+	\begin{flushleft}
+		\begin{tabbing}
+			Группа:\qquad\qquad\= ПММ-61\\
+			Студент:		   \> Горбунов К. К.\\
+			Руководитель:	   \> доц. Черникова О. С.\\
+		\end{tabbing}
+	\end{flushleft}
+
+	\begin{center}
+		\vspace{\fill}
+		Новосибирск, 2016 г.
+	\end{center}
+
+\end{titlepage}
+
+\tableofcontents
+
+\newpage
+
+\section{Постановка задачи}
+
+\subsection*{Структурно-вероятностное описание модельной структуры}
+%\addcontentsline{toc}{section}{Структурно-вероятностное описание модельной структуры}
+
+Рассмотрим следующую модель стохастической непрерывно-дискретной системы в пространстве состояний:
+
+\[ 
+	\left\{ 
+		\begin{array}{cl}
+			\dot{x}(t) &= F(t) x(t) + C(t) u(t) + G(t) w(t)  \\ 
+			y(t_{k+1}) &= H(t_{k+1}) x(t_{k+1}) + v(t_{k+1}) 
+		\end{array} 
+	\right. 
+\]
+
+Здесь:
+\begin{description}
+	\item [$x(t)$] -- $n$-вектор состояния;
+	\item [$F(t)$] -- матрица эволюции объекта (системы);
+	\item [$u(t)$] -- $r$-вектор управления (входа);
+	\item [$C(t)$] -- матрица входа;
+	\item [$w(t)$] -- $p$-вектор возмущений;
+	\item [$G(t)$] -- матрица влияний возмущений;
+	\item [$H(t)$] -- матрица наблюдений (измерений);
+	\item [$v(t_{k+1})$] -- шум измерений;
+	%\item [$
+\end{description}
+
+\section{Сравнительный анализ алгоритмов фильтрации}
+
+Сравнительный анализ.
+
+\subsection{Краткое описание калмановских алгоритмов фильтрации}
+
+Описание.
+
+\subsection{Адаптивные алгоритмы фильтрации}
+
+Алгоритмы, учитывающие появления аномальных наблюдений.
+
+\section*{Заключение}
+\addcontentsline{toc}{section}{Заключение}
+
+Заключение.
+
+\section*{Список источников}
+\addcontentsline{toc}{section}{Список источников}
+
+Список источников.
+
+\end{document}
