@@ -1,13 +1,11 @@
 
-.PHONY: main.pdf
-
-main.pdf: main.ltx
-	pdflatex main.ltx
+main.pdf: main.ltx main.aux 1est.tex 1-2est.tex
+	pdflatex $<
 
 view: main.pdf
-	evince main.pdf
+	xdg-open $< || explorer $< &
 
-%.pdf : %.tex
+%.aux: %.ltx
 	pdflatex $<
 
 clean:
