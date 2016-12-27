@@ -1,19 +1,11 @@
 
-all: main.pdf diary.pdf
-
-main.pdf: main.ltx main.aux main.toc
+diary.pdf: diary.tex diary.aux
 	pdflatex $<
 
-diary.pdf: diary.ltx diary.aux
-	pdflatex $<
-
-view: main.pdf
+view: diary.pdf
 	xdg-open $< || explorer $< &
 
-%.toc: %.ltx
-	pdflatex $<
-
-%.aux: %.ltx
+%.aux: %.tex
 	pdflatex $<
 
 clean:
