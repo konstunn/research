@@ -1,14 +1,14 @@
 
-main.pdf: main.ltx main.aux main.toc
+report.pdf: report.tex report.aux report.toc
 	pdflatex $<
 
-view: main.pdf
+view: report.pdf
 	xdg-open $< || explorer $< &
 
-%.toc: %.ltx
+%.toc: %.tex
 	pdflatex $<
 
-%.aux: %.ltx
+%.aux: %.tex
 	pdflatex $<
 
 clean:
