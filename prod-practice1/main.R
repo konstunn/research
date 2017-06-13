@@ -51,16 +51,16 @@ L <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 	  tt <- c(t[j-1], t[j])
 
 	  Xp <- ode(c(Xe), tt, dXp)
-		Xp <- Xp[nrow(Xp),] # get last row
+		Xp <- tail(Xp, n=1)
 		Xp <- Xp[-1] # throw away time value
 
 	  Pp <- ode(c(Pe), tt, dPp)
-		Pp <- Pp[nrow(Pp),] # get last row
+		Pp <- tail(Pp, n=1)
 		Pp <- Pp[-1] # throw away time value
 		Pp <- matrix(Pp, n, n) # form matrix
 
 	  # 3
-	  e <- y[j-1] - H %*% Xp
+	  e <- y[j] - H %*% Xp
 	  B <- H %*% Pp %*% t(H) + R
 	  invB <- inv(B)
 	  K <- Pp %*% t(H) %*% invB
