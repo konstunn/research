@@ -15,11 +15,12 @@ R <- function(th) matrix(th[8])
 
 # define th, u, y
 
+inv <- function(A) solve(A)
+Sp <- function(A) sum(diag(A))
+
 # loglik
 L <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 {
-	inv <- function(A) solve(A)
-	
 	Phi <- Phi(th)
 	G <- G(th)
 	Psi <- Psi(th)
