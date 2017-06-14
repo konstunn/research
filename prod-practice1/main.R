@@ -31,7 +31,6 @@ L <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 	R <- R(th)
 
 	# 1
-	j <- 2 # j starts from 2, not 1, because in R vectors indices are unity-based
 	chi <- 0
 	N <- length(t)
 	m <- ncol(H)
@@ -46,6 +45,7 @@ L <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 		list(c(Phi %*% Pp %*% t(Phi) + G %*% Q %*% t(G)))
 	}
 
+	# j starts from 2, not 1, because in R vectors indices are unity-based
 	for (j in 2:N)
 	{
 		# 2
@@ -104,7 +104,7 @@ gradL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 {
 	s <- length(th)
 	N <- length(t)
-	n <- nrow(Phi)
+	n <- nrow(Phi(th))
 
 	dPhi <- matderiv(Phi, th)
 	dPsi <- matderiv(Psi, th)
@@ -123,8 +123,8 @@ gradL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 	dX_0 <- matderiv(X_0, th)
 	X_0 <- X_0(th)
 
-	dP_0 <- matderiv(P_0, th)
-	P_0 <- P_0(th)
+	dP0 <- matderiv(P0, th)
+	P0 <- P0(th)
 
 	# Phi_A
 	Phi_dPhi <- rbind(Phi, Reduce(rbind, dPhi))
@@ -142,7 +142,7 @@ gradL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 	{
 		X_dX <- matrix(X_dX, nrow=n*(s+1))
 		d_X_dX <- Phi_A %*% X_dX + Psi_dPsi %*% u(tt)
-		list(c(d_X_dX))
+		list(as.numeric(d_X_dX))
 	}
 
 	# Phi_dPhi_t
@@ -150,18 +150,18 @@ gradL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 	dPhi_t <- Reduce(rbind, dPhi_t)
 	Phi_dPhi_t <- rbind(t(Phi), dPhi_t)
 
-	# G_dG
-	G_dG <- rbind(G, Reduce(rbind, dG))
+	# GdG
+	GdG <- c(G, dG)
 
-	# O_dG_t
+	# OdGt
 	dG_t <- lapply(dG, t)
 	dG_t <- Reduce(rbind, dG_t)
 	O <- matrix(0, nrow(G), ncol(G))
-	O_dG_t <- rbind(O, dG_t)
+	OdGt <- rbind(O, dG_t)
 
-	# O_dQ
+	# OdQ
 	O <- matrix(0, nrow(Q), ncol(Q))
-	O_dQ <- rbind(O, Reduce(rbind, dQ))
+	OdQ <- c(O, dQ)
 
 	d_Pp_dPp <- function(tt, P_dP, parms=NULL)
 	{
@@ -169,7 +169,7 @@ gradL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 
 		P <- P_dP[1:n,]
 		block_diag <- replicate(s, P, simplify=FALSE)
-		block_diag <- bdiag(P_A)
+		block_diag <- bdiag(block_diag)
 
 		O <- matrix(0, n, n)
 		O <- replicate(s, O)
@@ -178,10 +178,21 @@ gradL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 		P_A <- rbind(O, block_diag)
 		P_A <- cbind(P_dP, P_A)
 
-		d_P_dP <- Phi_A %*% P_dP + P_A %*% Phi_dPhi_t + G_dG %*% Q %*% t(G) +
-			G %*% O_dQ %*% t(G) + G %*% Q %*% O_dG_t
+		#
+		GdG_Q_Gt <- Map('%*%', GdG, Q %*% t(G))
+		GdG_Q_Gt <- Reduce(rbind, GdG_Q_Gt)
 
-		list(c(d_P_dP))
+		G_OdQ <- Map('%*%', G, OdQ)
+		G_OdQ_Gt <- Map('%*%', G_OdQ, t(G))
+		G_OdQ_Gt <- Reduce(rbind, G_OdQ_Gt)
+
+		G_Q_OdGt <- Map('%*%', G %*% Q, OdGt)
+		G_Q_OdGt <- Reduce(rbind, G_Q_OdGt)
+
+		d_P_dP <- Phi_A %*% P_dP + P_A %*% Phi_dPhi_t + GdG_Q_Gt + G_OdQ_Gt +
+			G_Q_OdGt
+
+		list(as.numeric(d_P_dP))
 	}
 
 	# 1
@@ -193,8 +204,8 @@ gradL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 			Xe_dXe <- Reduce(rbind, dX_0)
 			Xe_dXe <- rbind(X_0, Xe_dXe)
 
-			Pe_dPe <- Reduce(rbind, dP_0)
-			Pe_dPe <- rbind(P_0, Pe_dPe)
+			Pe_dPe <- Reduce(rbind, dP0)
+			Pe_dPe <- rbind(P0, Pe_dPe)
 		} else {
 			Xe <- Xp + K %*% E
 
@@ -246,7 +257,7 @@ gradL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 
 		# dB
 		dH_Pp_Ht <- Map('%*%', dH, Pp %*% t(H))
-		H_dPp_Ht <- lapply(dPp, function(dPp_i) H %*% Pp_i %*% t(H))
+		H_dPp_Ht <- lapply(dPp, function(dPp_i) H %*% dPp_i %*% t(H))
 		H_Pp_dHt <- Map('%*%', H %*% Pp, t(dH))
 
 		dB <- Map('+', dH_Pp_Ht, H_dPp_Ht)
@@ -270,7 +281,7 @@ gradL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 
 		# dE
 		dH_Xp <- Map('%*%', dH, -Xp)
-		Xp_dH <- Map('%*%', Xp, -dH)
+		Xp_dH <- Map('%*%', -Xp, dH)
 		dE <- Map('+', dH_Xp, Xp_dH)
 
 		# 6
@@ -279,7 +290,8 @@ gradL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 		Et_invB_dE <- Map('%*%', t(E) %*% invB, dE)
 		Et_invB_dB <- Map('%*%', t(E), invB_dB)
 		Et_invB_dB_invB_E <- Map('%*%', Et_invB_dB, -.5 * invB %*% E)
-		Sp_invB_dB <- Map(Sp, .5 * invB_dB)
+		Sp_invB_dB <- Map(Sp, invB_dB)
+		Sp_invB_dB <- Map('*', Sp_invB_dB, .5)
 
 		Sk <- Map('+', Et_invB_dE, Et_invB_dB_invB_E)
 		Sk <- Map('+', Sk, Sp_invB_dB)
@@ -287,7 +299,8 @@ gradL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 		# 7
 		dL <- Map('+', dL, Sk)
 
+
 		# 8
 	}
-	return(dL)
+	return(unlist(dL))
 }
