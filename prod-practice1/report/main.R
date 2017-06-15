@@ -14,6 +14,10 @@ Q <- function(th) matrix(th[7])
 R <- function(th) matrix(th[8])
 
 # define th, u, y
+th <- runif(8)
+t <- seq(0, 10, length.out=25)
+u <- function(t) sin(2*pi*100*t)
+y <- rnorm(length(t))
 
 inv <- function(A) solve(A)
 Sp <- function(A) sum(diag(A))
@@ -100,7 +104,7 @@ matderiv <- function(A, th)
 
 library(Matrix)
 
-gradL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
+dL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 {
 	s <- length(th)
 	N <- length(t)
