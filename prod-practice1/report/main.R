@@ -4,8 +4,10 @@ library(deSolve)
 # TODO: test with different models
 
 
-# TODO: put it in one list and call it model, define function to take it as the
+# TODO:
+# - put it in one list and call it model, define function to take it as the
 # only argument
+# - add function to verify model conformness
 
 # model
 X_0 <- function(th) matrix(th[1])
