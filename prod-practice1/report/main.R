@@ -3,6 +3,10 @@ library(deSolve)
 
 # TODO: test with different models
 
+
+# TODO: put it in one list and call it model, define function to take it as the
+# only argument
+
 # model
 X_0 <- function(th) matrix(th[1])
 P0 <- function(th) matrix(th[2])
