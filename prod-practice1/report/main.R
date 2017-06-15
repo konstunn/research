@@ -155,17 +155,17 @@ dL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 	Phi_dPhi_t <- rbind(t(Phi), dPhi_t)
 
 	# GdG
-	GdG <- c(G, dG)
+	GdG <- c(list(G), dG)
 
 	# OdGt
 	dG_t <- lapply(dG, t)
-	dG_t <- Reduce(rbind, dG_t)
+	#dG_t <- Reduce(rbind, dG_t)
 	O <- matrix(0, nrow(G), ncol(G))
-	OdGt <- rbind(O, dG_t)
+	OdGt <- c(list(O), dG_t)
 
 	# OdQ
 	O <- matrix(0, nrow(Q), ncol(Q))
-	OdQ <- c(O, dQ)
+	OdQ <- c(list(O), dQ)
 
 	d_Pp_dPp <- function(tt, P_dP, parms=NULL)
 	{
@@ -176,21 +176,21 @@ dL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 		block_diag <- bdiag(block_diag)
 
 		O <- matrix(0, n, n)
-		O <- replicate(s, O)
+		O <- replicate(s, O, simplify=FALSE)
 		O <- Reduce(cbind, O)
 
 		P_A <- rbind(O, block_diag)
 		P_A <- cbind(P_dP, P_A)
 
 		#
-		GdG_Q_Gt <- Map('%*%', GdG, Q %*% t(G))
+		GdG_Q_Gt <- Map('%*%', GdG, list(Q %*% t(G)))
 		GdG_Q_Gt <- Reduce(rbind, GdG_Q_Gt)
 
-		G_OdQ <- Map('%*%', G, OdQ)
-		G_OdQ_Gt <- Map('%*%', G_OdQ, t(G))
+		G_OdQ <- Map('%*%', list(G), OdQ)
+		G_OdQ_Gt <- Map('%*%', G_OdQ, list(t(G)))
 		G_OdQ_Gt <- Reduce(rbind, G_OdQ_Gt)
 
-		G_Q_OdGt <- Map('%*%', G %*% Q, OdGt)
+		G_Q_OdGt <- Map('%*%', list(G %*% Q), OdGt)
 		G_Q_OdGt <- Reduce(rbind, G_Q_OdGt)
 
 		d_P_dP <- Phi_A %*% P_dP + P_A %*% Phi_dPhi_t + GdG_Q_Gt + G_OdQ_Gt +
@@ -213,8 +213,8 @@ dL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 		} else {
 			Xe <- Xp + K %*% E
 
-			dK_E <- Map('%*%', dK, E)
-			K_dE <- Map('%*%', K, dE)
+			dK_E <- Map('%*%', dK, list(E))
+			K_dE <- Map('%*%', list(K), dE)
 
 			dXe <- Map('+', dK_E, K_dE)
 			dXe <- Map('+', dXe, dXp)
@@ -223,13 +223,13 @@ dL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 			Xe_dXe <- rbind(Xe, Xe_dXe)
 
 			I <- diag(n)
-			Pe <- (I - K %% H) %*% Pp
+			Pe <- (I - K %*% H) %*% Pp
 
-			dK_H <- Map('%*%', dK, -H)
-			K_dH <- Map('%*%', -K, dH)
-			I_K_H_dPp <- Map('%*%', I - K %*% H, dPp)
+			dK_H <- Map('%*%', dK, list(-H))
+			K_dH <- Map('%*%', list(-K), dH)
+			I_K_H_dPp <- Map('%*%', list(I - K %*% H), dPp)
 			dK_H_K_dH <- Map('+', dK_H, K_dH)
-			dK_H_K_dH_Pp <- Map('%*%', dK_H_K_dH, Pp)
+			dK_H_K_dH_Pp <- Map('%*%', dK_H_K_dH, list(Pp))
 			dPe <- Map('+', dK_H_K_dH_Pp, I_K_H_dPp)
 
 			Pe_dPe <- Reduce(rbind, dPe)
@@ -244,7 +244,9 @@ dL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 		Xp_dXp <- Xp_dXp[-1] # throw away first element (time value)
 
 		Xp <- head(Xp_dXp, n)
+		Xp <- as.matrix(Xp)
 		dXp <- tail(Xp_dXp, -n)
+		dXp <- split(dXp, rep(1:s))
 
 		Pp_dPp <- ode(c(Pe_dPe), tt, d_Pp_dPp)
 
@@ -254,15 +256,18 @@ dL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 
 		Pp <- head(Pp_dPp, n)
 		dPp <- tail(Pp_dPp, -n)
+		dPp <- split(dPp, rep(1:s, each=n))
+		dPp <- lapply(dPp, function(dPp_i) matrix(dPp_i, n, n))
 
 		# 3
 		B <- H %*% Pp %*% t(H) + R
 		invB <- inv(B)
 
 		# dB
-		dH_Pp_Ht <- Map('%*%', dH, Pp %*% t(H))
+		dH_Pp_Ht <- Map('%*%', dH, list(Pp %*% t(H)))
 		H_dPp_Ht <- lapply(dPp, function(dPp_i) H %*% dPp_i %*% t(H))
-		H_Pp_dHt <- Map('%*%', H %*% Pp, t(dH))
+		dHt <- Map(t, dH)
+		H_Pp_dHt <- Map('%*%', list(H %*% Pp), dHt)
 
 		dB <- Map('+', dH_Pp_Ht, H_dPp_Ht)
 		dB <- Map('+', dB, H_Pp_dHt)
@@ -272,10 +277,10 @@ dL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 		K <- Pp %*% t(H) %*% invB
 
 		#dK
-		dPp_Ht_invB <- Map('%*%', dPp, t(H) %*% invB)
+		dPp_Ht_invB <- Map('%*%', dPp, list(t(H) %*% invB))
 		Pp_dHt_invB <- lapply(dH, function(dH_i) Pp %*% t(dH_i) %*% invB)
-		Pp_Ht_invB_dB_invB <- Map('%*%', Pp %*% t(H) %*% invB, dB)
-		Pp_Ht_invB_dB_invB <- Map('%*%', Pp_Ht_invB_dB_invB, invB)
+		Pp_Ht_invB_dB <- Map('%*%', list(Pp %*% t(H) %*% invB), dB)
+		Pp_Ht_invB_dB_invB <- Map('%*%', Pp_Ht_invB_dB, list(invB))
 
 		dK <- Map('+', dPp_Ht_invB, Pp_dHt_invB)
 		dK <- Map('-', dK, Pp_Ht_invB_dB_invB)
@@ -284,16 +289,16 @@ dL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 		E <- y[j] - H %*% Xp
 
 		# dE
-		dH_Xp <- Map('%*%', dH, -Xp)
-		Xp_dH <- Map('%*%', -Xp, dH)
-		dE <- Map('+', dH_Xp, Xp_dH)
+		dH_Xp <- Map('%*%', dH, list(-Xp))
+		H_dXp <- Map('%*%', list(-H), dXp)
+		dE <- Map('+', dH_Xp, H_dXp)
 
 		# 6
 		# Sk
-		invB_dB <- Map('%*%', invB, dB)
-		Et_invB_dE <- Map('%*%', t(E) %*% invB, dE)
-		Et_invB_dB <- Map('%*%', t(E), invB_dB)
-		Et_invB_dB_invB_E <- Map('%*%', Et_invB_dB, -.5 * invB %*% E)
+		invB_dB <- Map('%*%', list(invB), dB)
+		Et_invB_dE <- Map('%*%', list(t(E) %*% invB), dE)
+		Et_invB_dB <- Map('%*%', list(t(E)), invB_dB)
+		Et_invB_dB_invB_E <- Map('%*%', Et_invB_dB, list(-.5 * invB %*% E))
 		Sp_invB_dB <- Map(Sp, invB_dB)
 		Sp_invB_dB <- Map('*', Sp_invB_dB, .5)
 
