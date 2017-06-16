@@ -6,17 +6,15 @@ library(MASS)
 
 # TODO: test with different models
 
-# TODO: add simulation procedure
-
 # model
 X_0 <- function(th) matrix(c(0,0))
-P0 <- function(th) matrix(c(0.1,0,0,0.1), 2)
-Phi <- function(th) matrix(c(th[1],0,0,-2), 2)
-Psi <- function(th) matrix(c(1,0,0,th[2]), 2)
-G <- function(th) matrix(c(1,0,0,1), 2)
+P0 <- function(th) matrix(c(0.01,0,0,0.01), 2)
+Phi <- function(th) matrix(c(-.5,0,0,-.5), 2)
+Psi <- function(th) matrix(c(1,0,0,1), 2)
+G <- function(th) matrix(c(0.1,0,0,0.1), 2)
 H <- function(th) matrix(c(1,0,0,1), 2)
-Q <- function(th) matrix(c(0.1,0,0,0.1), 2)
-R <- function(th) matrix(c(0.2,0,0,0.2), 2)
+Q <- function(th) matrix(c(0.01,0,0,0.01), 2)
+R <- function(th) matrix(c(0.02,0,0,0.02), 2)
 
 isStable <- function(A)
 {
@@ -30,7 +28,7 @@ isConformable <- function(model)
 	out <- tryCatch({
 		with(model,
 		{
-			th <- rnorm(nrow(Phi))
+			th <- rep(0, nrow(Phi))
 			Phi(th) %*% X_0(th) + G(th) %*% matrix(rep(1, nrow(Q(th))))
 			Psi(th) %*% X_0(th) + matrix(rep(2, nrow(R(th))))
 		})}, 
@@ -59,14 +57,27 @@ isObservable <- function(A, B)
 }
 
 # define th, u, y
-th <- runif(2)
-t <- seq(0, 10, length.out=25)
+th <- -(10*runif(2))
+t <- seq(0, 10, length.out=100)
 u <- function(t) matrix(c(10*sin(2*pi*100*t), 10*cos(2*pi*100*t)))
 u <- function(t) matrix(c(10,10))
 y <- matrix(c(rnorm(length(t)), rnorm(length(t))))
 
 inv <- function(A) solve(A)
 Sp <- function(A) sum(diag(A))
+
+dX <- function(t, Xp, parms) {
+	with(parms,
+	{
+		n <- nrow(Phi)
+		if (length(parms$G) == 0)
+			G <- matrix(0, n, n)
+		if (length(parms$w) == 0)
+			w <- matrix(0, n)
+		Xp <- matrix(Xp, n)
+		list(c(Phi %*% Xp + Psi %*% u(t) + G %*% w))
+	})
+}
 
 sim <- function(model, th, t, u) {
 	model <- lapply(model, function(A) A(th))
@@ -88,8 +99,12 @@ sim <- function(model, th, t, u) {
 		yc <- matrix(rep(NA, nrow(H)))
 		yc <- NULL
 
-		for (i in 1:length(t)) {
-			X <- Phi %*% X + Psi %*% u(t[i]) + G %*% w[,i]
+		# FIXME: make for continuous
+		for (i in 2:length(t)) {
+			tt <- c(t[i-1], t[i])
+			X <- ode(c(X), tt, dX, list(Phi=Phi, Psi=Psi, G=G, u=u, w=w[,i]))
+			X <- tail(X, n=1)
+			X <- X[-1]
 			yt <- H %*% X + v[,i]
 			yc <- cbind(yc, yt)
 		}
@@ -119,9 +134,6 @@ L <- function(model, th, u, y, t)
 	n <- nrow(Phi)
 	I <- diag(n)
 
-	dXp <- function(t, Xp, parms=NULL)
-		list(c(Phi %*% Xp + Psi %*% u(t)))
-
 	dPp <- function(tt, Pp, parms=NULL) {
 		Pp <- matrix(Pp, n, n)
 		list(c(Phi %*% Pp %*% t(Phi) + G %*% Q %*% t(G)))
@@ -133,7 +145,7 @@ L <- function(model, th, u, y, t)
 		# 2
 	  tt <- c(t[j-1], t[j])
 
-	  Xp <- ode(c(Xe), tt, dXp)
+	  Xp <- ode(c(Xe), tt, dX, list(Phi=Phi, Psi=Psi, u=u))
 		Xp <- tail(Xp, n=1)
 		Xp <- Xp[-1] # throw away time value
 
