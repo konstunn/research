@@ -1,36 +1,108 @@
 
 library(deSolve)
+library(numDeriv)
+library(Matrix)
+library(MASS)
 
 # TODO: test with different models
 
-
-# TODO:
-# - put it in one list and call it model, define function to take it as the
-# only argument
-# - add function to verify model conformness
+# TODO: add simulation procedure
 
 # model
-X_0 <- function(th) matrix(th[1])
-P0 <- function(th) matrix(th[2])
-Phi <- function(th) matrix(th[3])
-Psi <- function(th) matrix(th[4])
-G <- function(th) matrix(th[5])
-H <- function(th) matrix(th[6])
-Q <- function(th) matrix(th[7])
-R <- function(th) matrix(th[8])
+X_0 <- function(th) matrix(c(0,0))
+P0 <- function(th) matrix(c(0.1,0,0,0.1), 2)
+Phi <- function(th) matrix(c(th[1],0,0,-2), 2)
+Psi <- function(th) matrix(c(1,0,0,th[2]), 2)
+G <- function(th) matrix(c(1,0,0,1), 2)
+H <- function(th) matrix(c(1,0,0,1), 2)
+Q <- function(th) matrix(c(0.1,0,0,0.1), 2)
+R <- function(th) matrix(c(0.2,0,0,0.2), 2)
+
+isStable <- function(A)
+{
+	all(Re(eigen(A)$values) < 0)
+}
+
+model <- list(Phi=Phi, Psi=Psi, G=G, H=H, Q=Q, R=R, X_0=X_0, P0=P0)
+
+isConformable <- function(model)
+{
+	out <- tryCatch({
+		with(model,
+		{
+			th <- rnorm(nrow(Phi))
+			Phi(th) %*% X_0(th) + G(th) %*% matrix(rep(1, nrow(Q(th))))
+			Psi(th) %*% X_0(th) + matrix(rep(2, nrow(R(th))))
+		})}, 
+		error=function(e) e)
+	!any(class(out) == 'error')
+}
+
+observability <- function(A, B)
+{
+	n <- nrow(A)
+	OM <- B
+	for (i in 1:(n-1)) {
+		M <- replicate(i, A, simplify=FALSE)
+		M <- Reduce('%*%', M)
+		M <- M %*% B
+		OM <- rbind(OM, M)
+	}
+	OM
+}
+
+isObservable <- function(A, B)
+{
+	n <- nrow(A)
+	OM <- observability(A, B)
+	qr(OM)$rank == n
+}
 
 # define th, u, y
-th <- runif(8)
+th <- runif(2)
 t <- seq(0, 10, length.out=25)
-u <- function(t) sin(2*pi*100*t)
-y <- rnorm(length(t))
+u <- function(t) matrix(c(10*sin(2*pi*100*t), 10*cos(2*pi*100*t)))
+u <- function(t) matrix(c(10,10))
+y <- matrix(c(rnorm(length(t)), rnorm(length(t))))
 
 inv <- function(A) solve(A)
 Sp <- function(A) sum(diag(A))
 
+sim <- function(model, th, t, u) {
+	model <- lapply(model, function(A) A(th))
+	yc <- with(model,
+	{
+		# 
+		Sigma <- bdiag(list(P0, Q, R))
+		mv <- mvrnorm(length(t), c(X_0, rep(0, nrow(G)), rep(0, nrow(H))), Sigma)
+		mv <- t(mv)
+
+		X <- mv[1:nrow(Phi),1]
+		mv <- mv[(nrow(Phi)+1):nrow(mv),]
+
+		w <- mv[1:nrow(G),]
+		mv <- mv[(nrow(G)+1):nrow(mv),]
+
+		v <- mv[1:nrow(H),]
+
+		yc <- matrix(rep(NA, nrow(H)))
+		yc <- NULL
+
+		for (i in 1:length(t)) {
+			X <- Phi %*% X + Psi %*% u(t[i]) + G %*% w[,i]
+			yt <- H %*% X + v[,i]
+			yc <- cbind(yc, yt)
+		}
+		yc
+	})
+	yc
+}
+
 # loglik
-L <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
+L <- function(model, th, u, y, t)
 {
+	with(model, {
+
 	Phi <- Phi(th)
 	G <- G(th)
 	Psi <- Psi(th)
@@ -88,9 +160,9 @@ L <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 	}
 	chi <- chi + N*m / 2 * log(2*pi)
 	return(chi)
+	})
 }
 
-library(numDeriv)
 # returns list of partial derivatives of matrices by theta_i
 # A - matrix-function
 matderiv <- function(A, th)
@@ -108,10 +180,11 @@ matderiv <- function(A, th)
 	return(dA)
 }
 
-library(Matrix)
 
-dL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
+dL <- function(model, th, u, y, t)
 {
+	with(model, {
+
 	s <- length(th)
 	N <- length(t)
 	n <- nrow(Phi(th))
@@ -314,8 +387,8 @@ dL <- function(Phi, Psi, G, Q, H, R, X_0, P0, th, u, y, t)
 		# 7
 		dL <- Map('+', dL, Sk)
 
-
 		# 8
 	}
 	return(unlist(dL))
+	})
 }
