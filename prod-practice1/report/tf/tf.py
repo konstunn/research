@@ -63,60 +63,10 @@ shape_invariants = [tf.TensorShape([2, None]), i.get_shape(), k.get_shape()]
 loop = tf.while_loop(loop_cond, loop_body, [x, i, k], shape_invariants)
 
 
-class Model(object):
-
-    def __init__(self, F, C, G, H, x0_dist, w_dist, v_dist):
-        pass
-
-    def __define_observations_simulation(self):
-        pass
-
-    def __define_likelihood_computation(self):
-        pass
-
-    def __isConformable(self):
-        pass
-
-    def __isObservable(self):
-        pass
-
-    def __isControlable(self):
-        pass
-
-    def simulate(self, theta, u, t):
-        pass
-
-
 # TODO: inject theta parameters
 def simulate(F, C, G, H, x0, P0, u, t):
-    '''arguments are constant tensors'''
+    pass
 
-    # TODO: check model if model is conformable
-
-    x = tf.contrib.distributions.MultivariateNormalDiag(x0, P0).sample([1])
-
-    def loop_cond(x, P, u, y, i, k):
-        pass
-
-    def loop_body(vars):
-
-        def state_propagate(x, t):
-            w = w_dist.sample([1])
-            x = tf.matmul(F, x) + tf.matmul(C, u) + tf.matmul(G, w)
-            return x
-
-        def covariance_propagate(P, t):
-            GQ = tf.matmul(G, Q)
-            P = tf.matmul(F, P) + tf.matmul(P, F, True) + tf.matmul(GQ, Q, True)
-            return P
-
-        # FIXME: t = t[i-1:i]
-        xn, info = tf.contrib.integrate.odeint(state_propagate, x, t)
-
-    #
-
-
-# LL
 
 print('Running graph')
 
