@@ -2,14 +2,15 @@
 import tensorflow as tf
 import control
 import numpy as np
+from tf.contrib.distributions import MultivariateNormalDiag
 
 
 class Model(object):
 
     # TODO: introduce some more default argument values, check types, cast if
     # neccessary
-    def __init__(self, F, C, G, H, x0_mean, x0_cov, w_mean=None, w_cov,
-                 v_mean=None, v_cov, th):
+    def __init__(self, F, C, G, H, x0_mean, th, x0_cov, w_cov, v_cov,
+                 w_mean=None, v_mean=None):
         """
         Arguments are all callables (functions) of 'th' returning numpy
         matrices except for 'w_mean', 'v_mean' and 'th' itself (of course)
@@ -60,41 +61,77 @@ class Model(object):
         self.__define_likelihood_computation()
 
     def __define_observations_simulation(self):
-        '''arguments are constant tensors'''
 
-        # set method local variables
-        th = self.__th
-        x0_mean = self.__x0_mean
-        x0_cov = self.__x0_cov
-        x0_mean = x0_mean(th)
-        x0_cov = x0_cov(th)
+        self.__sim_graph = tf.Graph()
+        sim_graph = self.__sim_graph
+        s = len(self.__th)
+        r = self.__C.shape[1]
 
-        x0 = tf.contrib.distributions.MultivariateNormalDiag(x0_mean,
-                                                            x0_cov).sample([1])
+        with sim_graph.as_default():
+            u = tf.placeholder(tf.float64, shape=[r, 1, None], name='u')
+            th = tf.placeholder(tf.float64, shape=[1, s], name='th')
+            t = tf.placeholder(tf.float64, shape=[1, None], name='t')
+            F = tf.py_func(self.__F, [th], name='F')
+            C = tf.py_func(self.__C, [th], name='C')
+            G = tf.py_func(self.__G, [th], name='G')
+            H = tf.py_func(self.__H, [th], name='H')
 
-        def loop_cond(loop_vars):
-            pass
+            x0_mean = tf.py_func(self.__x0_mean, [th], name='x0_mean')
+            x0_cov = tf.py_func(self.__x0_cov, [th], name='x0_cov')
+            x0_dist = MultivariateNormalDiag(x0_mean, x0_cov, name='x0_dist')
 
-        def loop_body(loop_vars):
+            Q = tf.py_func(self.__w_cov, [th], name='w_cov')
+            w_mean = self.__w_mean
+            w_dist = MultivariateNormalDiag(w_mean, Q, name='w_dist')
 
-            def state_propagate(x, t):
-                w = w_dist.sample([1])
-                x = tf.matmul(F, x) + tf.matmul(C, u) + tf.matmul(G, w)
-                return x
+            R = tf.py_func(self.__v_cov, [th], name='v_cov')
+            v_mean = self.__v_mean
+            v_dist = MultivariateNormalDiag(v_mean, R, name='v_dist')
 
-            def covariance_propagate(P, t):
-                GQ = tf.matmul(G, Q)
-                P = tf.matmul(F, P) + tf.matmul(P, F, True) + tf.matmul(GQ, Q,
-                                                                        True)
-                return P
 
-            # FIXME: t = t[i-1:i]
-            xn, info = tf.contrib.integrate.odeint(state_propagate, x, t)
 
-        pass
+            def sim_obs(x):
+                v = v_dist.sample([1])
+                y = tf.matmul(H, x) + v
+                return y
+
+            def sim_loop_cond(x, y, t, k):
+                N = t.get_shape()[0]
+                return tf.less(k, N-1)
+
+            def sim_loop_body(x, y, t, k):
+
+                u_t_k = tf.slice(u, [0, 0, k], [r, 1, 1])
+
+                def state_propagate(x, t):
+                    w = w_dist.sample([1])
+                    dx = tf.matmul(F, x) + tf.matmul(C, u_t_k) + tf.matmul(G, w)
+                    return dx
+
+                tk = tf.slice(t, k, 2, 'tk')
+                x_p = tf.contrib.integrate.odeint(state_propagate, x, tk)
+
+                y_k = sim_obs(x)
+
+                x = tf.stack([x, x_p])
+                y = tf.stack([y, y_k])
+                k = k + 1
 
     def __define_likelihood_computation(self):
+        def state_propagate(x, t):
+            # w = w_dist.sample([1])
+            # FIXME: undefined name 'u__t_k'
+            # x = tf.matmul(F, x) + tf.matmul(C, u__t_k) + tf.matmul(G, w)
+            return x
+
+        def covariance_propagate(P, t):
+            # GQtG = tf.matmul(tf.matmul(G, Q), G, transpose_b=True)
+            # FIXME: transpose b, not a
+            # P = tf.matmul(F, P) + tf.matmul(P, F, transpose_b=True) + GQtG
+            return P
         pass
+
+
 
     def __isObservable(self):
         F = self.__F
