@@ -2,7 +2,7 @@
 import tensorflow as tf
 import control
 import numpy as np
-from tf.contrib.distributions import MultivariateNormalDiag
+from tensorflow.contrib.distributions import MultivariateNormalDiag
 
 
 class Model(object):
@@ -66,11 +66,15 @@ class Model(object):
         sim_graph = self.__sim_graph
         s = len(self.__th)
         r = self.__C.shape[1]
+        m = self.__H.shape[1]
+        n = self.__F.shape[1]
 
         with sim_graph.as_default():
+
             u = tf.placeholder(tf.float64, shape=[r, 1, None], name='u')
             th = tf.placeholder(tf.float64, shape=[1, s], name='th')
             t = tf.placeholder(tf.float64, shape=[1, None], name='t')
+
             F = tf.py_func(self.__F, [th], name='F')
             C = tf.py_func(self.__C, [th], name='C')
             G = tf.py_func(self.__G, [th], name='G')
@@ -88,8 +92,6 @@ class Model(object):
             v_mean = self.__v_mean
             v_dist = MultivariateNormalDiag(v_mean, R, name='v_dist')
 
-
-
             def sim_obs(x):
                 v = v_dist.sample([1])
                 y = tf.matmul(H, x) + v
@@ -101,21 +103,36 @@ class Model(object):
 
             def sim_loop_body(x, y, t, k):
 
-                u_t_k = tf.slice(u, [0, 0, k], [r, 1, 1])
-
                 def state_propagate(x, t):
                     w = w_dist.sample([1])
                     dx = tf.matmul(F, x) + tf.matmul(C, u_t_k) + tf.matmul(G, w)
                     return dx
 
+                u_t_k = tf.slice(u, [0, 0, k], [r, 1, 1])
+
                 tk = tf.slice(t, k, 2, 'tk')
-                x_p = tf.contrib.integrate.odeint(state_propagate, x, tk)
+                x_k = tf.contrib.integrate.odeint(state_propagate, x, tk)
 
                 y_k = sim_obs(x)
 
-                x = tf.stack([x, x_p])
+                x = tf.stack([x, x_k])
                 y = tf.stack([y, y_k])
                 k = k + 1
+                return x, y, t, k
+
+            x = x0_dist.sample([1])
+
+            y = tf.constant(0, dtype=tf.float64, shape=[m, 1, 0])
+            k = tf.constant(0)
+
+            shape_invariants = [tf.TensorShape([n, 1, None]),
+                                tf.TensorShape([m, 1, None]),
+                                t.get_shape(),
+                                k.get_shape()]
+
+            sim_loop = tf.while_loop(sim_loop_cond, sim_loop_body,
+                                     [x, y, t, k], shape_invariants,
+                                     name='sim_loop')
 
     def __define_likelihood_computation(self):
         def state_propagate(x, t):
@@ -130,8 +147,6 @@ class Model(object):
             # P = tf.matmul(F, P) + tf.matmul(P, F, transpose_b=True) + GQtG
             return P
         pass
-
-
 
     def __isObservable(self):
         F = self.__F
