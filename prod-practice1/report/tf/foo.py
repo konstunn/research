@@ -6,7 +6,7 @@ import numpy as np
 print('Defining graph')
 
 n = 2
-k = 10
+k = 100
 p = 2
 r = 2
 m = 2
@@ -15,14 +15,14 @@ x_shape = tf.TensorShape([n, 1])
 
 # TODO: these all should be python functions of theta, computed and results
 # passed in placeholders
-F = tf.constant([-.1, 0, 0, -.1], tf.float64, [n, n], "system_matrix")
+F = tf.constant([2, 0.0, 0.0, 2], tf.float64, [n, n], "system_matrix")
 C = tf.constant([1, 0, 0, 1], tf.float64, [r, n], "control_matrix")
 G = tf.constant([1, 0, 0, 1], tf.float64, [n, p], "object_noise_matrix")
 H = tf.constant([1, 0, 0, 1], tf.float64, [m, n], "measurement_matrix")
 x0 = tf.constant([0, 0], tf.float64, x_shape, "initial_state_mean")
 P0 = tf.constant([.1, .1], tf.float64, [n, n], "initial_state_covariance")
 
-x = tf.constant([1, 1], tf.float64, x_shape, "state")
+x = tf.constant([1.0, 1.0], tf.float64, x_shape, "state")
 
 u = tf.constant(5, tf.float64, [r, k], "input")
 
@@ -46,11 +46,11 @@ Q = tf.constant(w_sigma, tf.float32, [2, 2], "object_noise_covariance")
 w_dist = tf.contrib.distributions.MultivariateNormalDiag(w_mean, Q)
 
 
-def loop_cond(x, i, k):
+def loop_cond(x, i):
     return tf.less(i, k)
 
 
-def loop_body(x, i, k):
+def loop_body(x, i):
     x_slice = tf.slice(x, [0, i], x_shape)
     xp = tf.matmul(F, x_slice)
     x = tf.concat([x, xp], 1)
@@ -58,9 +58,9 @@ def loop_body(x, i, k):
     return x, i
 
 
-shape_invariants = [tf.TensorShape([2, None]), i.get_shape(), k.get_shape()]
+shape_invariants = [tf.TensorShape([2, None]), i.get_shape()]
 
-loop = tf.while_loop(loop_cond, loop_body, [x, i, k], shape_invariants)
+loop = tf.while_loop(loop_cond, loop_body, [x, i], shape_invariants)
 
 
 # TODO: inject theta parameters
@@ -75,5 +75,5 @@ with tf.Session() as sess:
     xx = sess.run(loop)[0]
     xx = np.transpose(xx)
     print(xx)
-    print(sess.run(rv))
+    # print(sess.run(rv))
     # writer.close()
