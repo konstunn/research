@@ -191,25 +191,28 @@ class Model(object):
             return P
         pass
 
-    def __isObservable(self):
+    def __isObservable(self, th=None):
+        if th is None:
+            th = self.__th
         F = self.__F
         C = self.__C
-        th = self.__th
         obsv_matrix = control.obsv(F(th), C(th))
         rank = np.linalg.matrix_rank(obsv_matrix)
         return rank == F(th).shape[0]
 
-    def __isControllable(self):
+    def __isControllable(self, th=None):
+        if th is None:
+            th = self.__th
         F = self.__F
         C = self.__C
-        th = self.__th
         ctrb_matrix = control.ctrb(F(th), C(th))
         rank = np.linalg.matrix_rank(ctrb_matrix)
         return rank == F(th).shape[0]
 
-    def __isStable(self):
+    def __isStable(self, th=None):
+        if th is None:
+            th = self.__th
         F = self.__F
-        th = self.__th
         eigv = np.linalg.eigvals(F(th))
         real_parts = np.real(eigv)
         return np.all(real_parts < 0)
