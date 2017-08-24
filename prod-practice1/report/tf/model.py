@@ -56,18 +56,7 @@ class Model(object):
         self.__v_cov = v_cov
         self.__th = th
 
-        # TODO: prove, print matrices and their criteria
-        if not self.__isControllable():
-            raise Exception('''Model is not controllable. Set different
-                            structure or parameters values''')
-
-        if not self.__isStable():
-            raise Exception('''Model is not stable. Set different structure or
-                            parameters values''')
-
-        if not self.__isObservable():
-            raise Exception('''Model is not observable. Set different  structure
-                            or parameters values''')
+        self.__validate()
 
         # TODO: all instances would share the same graphs, so make graphs
         # class-wide variable
@@ -223,6 +212,20 @@ class Model(object):
         # TODO: check observability
         # TODO: run simulation graph
         pass
+    def __validate(self, th=None):
+        # TODO: prove, print matrices and their criteria
+        if not self.__isControllable(th):
+            raise Exception('''Model is not controllable. Set different
+                            structure or parameters values''')
+
+        if not self.__isStable(th):
+            raise Exception('''Model is not stable. Set different structure or
+                            parameters values''')
+
+        if not self.__isObservable(th):
+            raise Exception('''Model is not observable. Set different  structure
+                            or parameters values''')
+
 
     def likelihood(self, th, y, u):
         pass
