@@ -8,13 +8,13 @@ library(MASS)
 
 # model
 X_0 <- function(th) matrix(c(0,0))
-P0 <- function(th) matrix(c(0.01,0,0,0.01), 2)
+P0 <- function(th) matrix(c(1e-9,0,0,1e-9), 2)
 Phi <- function(th) matrix(c(th[1],0,0,th[2]), 2)
 Psi <- function(th) matrix(c(1,0,0,1), 2)
-G <- function(th) matrix(c(0.04,0,0,0.04), 2)
+G <- function(th) matrix(c(1e-9,0,0,1e-9), 2)
 H <- function(th) matrix(c(1,0,0,1), 2)
-Q <- function(th) matrix(c(0.01,0,0,0.01), 2)
-R <- function(th) matrix(c(0.02,0,0,0.02), 2)
+Q <- function(th) matrix(c(1e-9,0,0,1e-9), 2)
+R <- function(th) matrix(c(1e-9,0,0,1e-9), 2)
 
 isStable <- function(model, th)
 {
@@ -32,7 +32,6 @@ isConformable <- function(model, th)
 	out <- tryCatch({
 		with(model,
 		{
-			# th <- rep(0, nrow(Phi))
 			Phi(th) %*% X_0(th) + G(th) %*% matrix(rep(1, nrow(Q(th))))
 			Psi(th) %*% X_0(th) + matrix(rep(2, nrow(R(th))))
 		})}, 
@@ -60,28 +59,28 @@ isObservable <- function(A, B)
 	qr(OM)$rank == n
 }
 
-# define th, u, y
-th <- -(10*runif(2))
-t <- seq(0, 10, length.out=100)
-u <- function(t) matrix(c(10*sin(2*pi*100*t), 10*cos(2*pi*100*t)))
-u <- function(t) matrix(c(10,10))
-y <- matrix(c(rnorm(length(t)), rnorm(length(t))))
-
 inv <- function(A) solve(A)
 Sp <- function(A) sum(diag(A))
 
+DEBUGDX <- F
+
 dX <- function(t, Xp, parms)
 {
-	with(parms,
-	{
-		n <- nrow(Phi)
-		if (length(parms$G) == 0)
-			G <- matrix(0, n, n)
-		if (length(parms$w) == 0)
-			w <- matrix(0, n)
-		Xp <- matrix(Xp, n)
-		list(c(Phi %*% Xp + Psi %*% u(t) + G %*% w))
-	})
+	Phi <- parms$Phi
+	Psi <- parms$Psi
+	#browser()
+	u <- parms$u
+	w <- parms$w
+	G <- parms$G
+
+	if (DEBUGDX) browser()
+	n <- nrow(Phi)
+	if (is.null(G) && is.null(w)) {
+		G <- matrix(0, n, n)
+		w <- matrix(0, n)
+	}
+	Xp <- matrix(Xp, n)
+	list(c(Phi %*% Xp + Psi %*% u(t) + G %*% w))
 }
 
 sim <- function(model, th, t, u)
@@ -123,63 +122,79 @@ sim <- function(model, th, t, u)
 	yc
 }
 
+
+# define th, u, y
+th <- c(-2, -2)
+t <- seq(0, 10, length.out=100)
+u <- function(t) matrix(c(10*sin(2*pi*100*t), 10*cos(2*pi*100*t)))
+u <- function(t) matrix(c(10,10))
+y <- sim(model, th, t, u)
+
+DEBUGL <- F
+
 # loglik
-L <- function(model, th, u, y, t)
+L <- function(th, model, u, y, t)
 {
 	model <- lapply(model, function(A) A(th))
 
-	with(model,
+	Phi <- model$Phi
+	Psi <- model$Psi
+	G <- model$G
+	H <- model$H
+	Q <- model$Q
+	R <- model$R
+	X_0 <- model$X_0
+	P0 <- model$P0
+
+	Xe <- X_0
+	Pe <- P0
+
+	# 1
+	chi <- 0
+	N <- length(t)
+	m <- ncol(H)
+	n <- nrow(Phi)
+	I <- diag(n)
+
+	dPp <- function(tt, Pp, parms=NULL) {
+		Pp <- matrix(Pp, n, n)
+		list(c(Phi %*% Pp %*% t(Phi) + G %*% Q %*% t(G)))
+	}
+
+	# j starts from 2, not 1, because in R vectors indices are unity-based
+	for (j in 2:N)
 	{
-		Xe <- X_0
-		Pe <- P0
+		# 2
+		tt <- c(t[j-1], t[j])
 
-		# 1
-		chi <- 0
-		N <- length(t)
-		m <- ncol(H)
-		n <- nrow(Phi)
-		I <- diag(n)
+		if (DEBUGL) browser()
+		Xp <- ode(c(Xe), tt, dX, list(Phi=Phi, Psi=Psi, u=u))
+		Xp <- tail(Xp, n=1)
+		Xp <- Xp[-1] # throw away time value
 
-		dPp <- function(tt, Pp, parms=NULL) {
-			Pp <- matrix(Pp, n, n)
-			list(c(Phi %*% Pp %*% t(Phi) + G %*% Q %*% t(G)))
-		}
+		Pp <- ode(c(Pe), tt, dPp)
+		Pp <- tail(Pp, n=1)
+		Pp <- Pp[-1] # throw away time value
+		Pp <- matrix(Pp, n, n) # form matrix
 
-		# j starts from 2, not 1, because in R vectors indices are unity-based
-		for (j in 2:N)
-		{
-			# 2
-			tt <- c(t[j-1], t[j])
+		# 3
+		e <- y[, j-1] - H %*% Xp
+		B <- H %*% Pp %*% t(H) + R
+		invB <- inv(B)
+		K <- Pp %*% t(H) %*% invB
 
-			Xp <- ode(c(Xe), tt, dX, list(Phi=Phi, Psi=Psi, u=u))
-			Xp <- tail(Xp, n=1)
-			Xp <- Xp[-1] # throw away time value
+		# 4
+		S <- 1/2 * (t(e) %*% invB %*% e + log(det(B)))
 
-			Pp <- ode(c(Pe), tt, dPp)
-			Pp <- tail(Pp, n=1)
-			Pp <- Pp[-1] # throw away time value
-			Pp <- matrix(Pp, n, n) # form matrix
+		# 5
+		chi <- chi + S
 
-			# 3
-			# browser()
-			e <- y[, j-1] - H %*% Xp
-			B <- H %*% Pp %*% t(H) + R
-			invB <- inv(B)
-			K <- Pp %*% t(H) %*% invB
-
-			# 4
-			S <- 1/2 * (t(e) %*% invB %*% e + log(det(B)))
-
-			# 5
-			chi <- chi + S
-
-			# 6
-			Xe <- Xp + K %*% e
-			Pe <- (I - K %*% H) %*% Pp
-		}
-		chi <- chi + N*m / 2 * log(2*pi)
-		return(chi)
-	})
+		# 6
+		Xe <- Xp + K %*% e
+		Pe <- (I - K %*% H) %*% Pp
+	}
+	chi <- chi + N*m / 2 * log(2*pi)
+	return(chi)
 }
 
 # returns list of partial derivatives of matrices by theta_i
@@ -199,6 +214,14 @@ matderiv <- function(A, th)
 	return(dA)
 }
 
+DEBUGDL <- F
+
+# TODO: try to estimate parameters, calculate error in parameters space as well
+# as in responses space
+
+library(nloptr)
+
+#slsqp(rnorm(length(th)), L, model=model, u=u, y=y, t=t)
 
 # FIXME:
 dL <- function(model, th, u, y, t)
@@ -247,6 +270,8 @@ dL <- function(model, th, u, y, t)
 			d_X_dX <- Phi_A %*% X_dX + Psi_dPsi %*% u(tt)
 			list(as.numeric(d_X_dX))
 		}
+
+		if (DEBUGDL) browser()
 
 		# Phi_dPhi_t
 		dPhi_t <- lapply(dPhi, t)
@@ -354,6 +379,7 @@ dL <- function(model, th, u, y, t)
 			Pp_dPp <- matrix(Pp_dPp, n*(s+1))
 
 			Pp <- head(Pp_dPp, n)
+			Pp <- matrix(Pp, n, n)
 			dPp <- tail(Pp_dPp, -n)
 			dPp <- split(dPp, rep(1:s, each=n))
 			dPp <- lapply(dPp, function(dPp_i) matrix(dPp_i, n, n))
