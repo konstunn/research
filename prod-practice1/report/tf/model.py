@@ -20,24 +20,24 @@ class Model(object):
 
         th = np.array(th)
 
-        w_mean = np.zeros((w_cov(th).shape[0], 1), np.float64)
-        v_mean = np.zeros((v_cov(th).shape[0], 1), np.float64)
-
         n = F(th).shape[0]
         m = H(th).shape[0]
         p = G(th).shape[1]
 
+        w_mean = np.zeros([w_cov(th).shape[0], 1], np.float64)
+        v_mean = np.zeros([v_cov(th).shape[0], 1], np.float64)
+
         # check conformability
-        u = np.ones((C(th).shape[0], 1))
+        u = np.ones([C(th).shape[0], 1])
         # mean must be one dimensional
-        x0_m = np.asarray(x0_mean(th)).squeeze()
-        x = np.random.multivariate_normal(x0_m, x0_cov(th))
+        x0_m = np.asarray(x0_mean(th))
+        x = np.random.multivariate_normal(x0_m.squeeze(), x0_cov(th))
         w = np.random.multivariate_normal(w_mean.squeeze(), w_cov(th))
         v = np.random.multivariate_normal(v_mean.squeeze(), v_cov(th))
 
-        x = x.reshape((n, 1))
-        w = w.reshape((p, 1))
-        v = v.reshape((m, 1))
+        x = x.reshape([n, 1])
+        w = w.reshape([p, 1])
+        v = v.reshape([m, 1])
 
         # if model is not conformable, exception would be raised here
         F(th) * x + C(th) * u + G(th) * w
@@ -64,10 +64,10 @@ class Model(object):
         # self.__define_likelihood_computation()
 
     def __define_observations_simulation(self):
+        # TODO: reduce code not to create extra operations
 
         self.__sim_graph = tf.Graph()
         sim_graph = self.__sim_graph
-        th = self.__th
         s = len(self.__th)
 
         # TODO: refactor
@@ -82,41 +82,59 @@ class Model(object):
         with sim_graph.as_default():
 
             th = tf.placeholder(tf.float64, shape=[s], name='th')
-            N = tf.placeholder(tf.int32, shape=[], name='N')
+
+            # TODO: this should be continuous function of time
+            # but try to let pass array also
             u = tf.placeholder(tf.float64, shape=[r, None], name='u')
+
             t = tf.placeholder(tf.float64, shape=[None], name='t')
             # TODO: check: u.shape[1] == t.shape[0]
 
             # TODO: refactor
             F = tf.py_func(self.__F, [th], tf.float64, name='F')
             F.set_shape([n, n])
+
             C = tf.py_func(self.__C, [th], tf.float64, name='C')
             C.set_shape([n, r])
+
             G = tf.py_func(self.__G, [th], tf.float64, name='G')
             G.set_shape([n, p])
+
             H = tf.py_func(self.__H, [th], tf.float64, name='H')
             H.set_shape([m, n])
 
             x0_mean = tf.py_func(x0_mean, [th], tf.float64, name='x0_mean')
+            # x0_mean.set_shape([n, 1])
+            x0_mean = tf.squeeze(x0_mean)
+
             x0_cov = tf.py_func(x0_cov, [th], tf.float64, name='x0_cov')
+            x0_cov.set_shape([n, n])
+
+            # FIXME: fix *ALL* dists shapes
             x0_dist = MultivariateNormalFullCovariance(x0_mean, x0_cov,
                                                        name='x0_dist')
 
             Q = tf.py_func(self.__w_cov, [th], tf.float64, name='w_cov')
-            w_mean = self.__w_mean
+            Q.set_shape([p, p])
+
+            w_mean = self.__w_mean.squeeze()
             w_dist = MultivariateNormalFullCovariance(w_mean, Q, name='w_dist')
 
             R = tf.py_func(self.__v_cov, [th], tf.float64, name='v_cov')
-            v_mean = self.__v_mean
+            R.set_shape([m, m])
+            v_mean = self.__v_mean.squeeze()
             v_dist = MultivariateNormalFullCovariance(v_mean, R, name='v_dist')
 
             def sim_obs(x):
-                v = v_dist.sample([1])
+                v = v_dist.sample()
+                # print(v)
                 v = tf.reshape(v, [m, 1])
                 y = tf.matmul(H, x) + v
                 return y
 
             def sim_loop_cond(x, y, t, k):
+                N = tf.stack([tf.shape(t)[0]])
+                N = tf.reshape(N, ())
                 return tf.less(k, N-1)
 
             def sim_loop_body(x, y, t, k):
@@ -124,28 +142,28 @@ class Model(object):
                 u_t_k = tf.slice(u, [0, k], [r, 1])
 
                 def state_propagate(x, t):
-                    # TODO: reduce code
-                    w = w_dist.sample([1])
+                    w = w_dist.sample()
                     w = tf.reshape(w, [p, 1])
-                    # x = tf.reshape(x, [n, 1])
                     Fx = tf.matmul(F, x, name='Fx')
                     Cu = tf.matmul(C, u_t_k, name='Cu')
                     Gw = tf.matmul(G, w, name='Gw')
                     dx = Fx + Cu + Gw
-                    # dx = tf.reshape(dx, [n])
                     return dx
 
                 tk = tf.slice(t, [k], [2], 'tk')
 
-                x_k = x[:][-1]
+                x_k = x[:, -1]
                 x_k = tf.reshape(x_k, [n, 1])
                 x_k = tf.contrib.integrate.odeint(state_propagate, x_k, tk,
-                                                  name='state_propagate')
+                                                  name='state_propagate',
+                                                  rtol=1e-3,
+                                                  atol=1e-9)
 
-                x_k = x_k[-1]               # last state (last row)
+                x_k = x_k[-1]   # last state (last row)
 
-                y_k = sim_obs(x)
+                y_k = sim_obs(x_k)
 
+                # TODO: stack instead of concat
                 x = tf.concat([x, x_k], 1)
                 y = tf.concat([y, y_k], 1)
 
@@ -153,7 +171,8 @@ class Model(object):
 
                 return x, y, t, k
 
-            x = x0_dist.sample([1], name='x0_sample')
+            x = x0_dist.sample(name='x0_sample')
+            # print(x)
             x = tf.reshape(x, [n, 1], name='x')
 
             y = sim_obs(x)
@@ -167,6 +186,10 @@ class Model(object):
             sim_loop = tf.while_loop(sim_loop_cond, sim_loop_body,
                                      [x, y, t, k], shape_invariants,
                                      name='sim_loop')
+
+            self.__sim_loop_op = sim_loop
+            sim_x = tf.identity(sim_loop[0], name='sim_x')
+            sim_y = tf.identity(sim_loop[1], name='sim_y')
 
     def __define_likelihood_computation(self):
         def state_propagate(x, t):
@@ -206,12 +229,6 @@ class Model(object):
         real_parts = np.real(eigv)
         return np.all(real_parts < 0)
 
-    def simulate(self, th, u, t):
-        # TODO: check controlability, if not cotrolable, print warning
-        # TODO: check stability, if not stable, print warning
-        # TODO: check observability
-        # TODO: run simulation graph
-        pass
     def __validate(self, th=None):
         # TODO: prove, print matrices and their criteria
         if not self.__isControllable(th):
@@ -226,6 +243,21 @@ class Model(object):
             raise Exception('''Model is not observable. Set different  structure
                             or parameters values''')
 
+    def simulate(self, u, t, th=None):
+        if th is None:
+            th = self.__th
+
+        self.__validate(th)
+        g = self.__sim_graph
+
+        # run simulation graph
+        with tf.Session(graph=g) as sess:
+            t_ph = g.get_tensor_by_name('t:0')
+            th_ph = g.get_tensor_by_name('th:0')
+            u_ph = g.get_tensor_by_name('u:0')
+            rez = sess.run(self.__sim_loop_op, {th_ph: th, t_ph: t, u_ph: u})
+
+        return rez
 
     def likelihood(self, th, y, u):
         pass
@@ -233,15 +265,21 @@ class Model(object):
     def mle_fit(self, th, y, u):
         pass
 
-# test
+# model
 F = lambda th: np.diag([-.9, -.9])
 C = lambda th: np.eye(2)
 G = lambda th: np.eye(2)
 H = lambda th: np.eye(2)
-x0_m = lambda th: np.zeros((2, 1))
+x0_m = lambda th: np.zeros([2, 1])
 x0_c = lambda th: np.diag([.01, .01])
 w_c = x0_c
 v_c = x0_c
+
 th = [1.0]
 
 m = Model(F, C, G, H, x0_m, x0_c, w_c, v_c, th)
+
+t = np.linspace(0, 1, 10)
+u = np.ones([2, 10], dtype=np.float64)
+u = u * 10
+rez = m.simulate(u, t)
