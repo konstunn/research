@@ -265,21 +265,25 @@ class Model(object):
     def mle_fit(self, th, y, u):
         pass
 
+# test
+
 # model
-F = lambda th: np.diag([-.9, -.9])
-C = lambda th: np.eye(2)
-G = lambda th: np.eye(2)
-H = lambda th: np.eye(2)
+F = lambda th: np.diag([-th[0], -th[1]])
+C = lambda th: np.diag([th[0], th[1]])
+G = lambda th: np.diag([th[0], th[1]])
+H = lambda th: np.diag([th[0], th[1]])
 x0_m = lambda th: np.zeros([2, 1])
-x0_c = lambda th: np.diag([.01, .01])
+x0_c = lambda th: np.diag([1e-2*th[0], 1e-2*th[1]])
 w_c = x0_c
 v_c = x0_c
 
-th = [1.0]
+th = [1.0, 1.0]
 
 m = Model(F, C, G, H, x0_m, x0_c, w_c, v_c, th)
 
-t = np.linspace(0, 1, 10)
-u = np.ones([2, 10], dtype=np.float64)
+t = np.linspace(0, 10, 100)
+u = np.ones([2, 100])
 u = u * 10
+
+# run simulation
 rez = m.simulate(u, t)
