@@ -302,8 +302,15 @@ class Model(object):
             S = tf.constant(0.0, dtype=tf.float64, shape=[1, 1], name='S')
             x = x0_mean
 
+            # TODO: make a named tuple of named list
             lik_loop = tf.while_loop(lik_loop_cond, lik_loop_body,
                                      [k, P, S, t, u, x, y], name='lik_loop')
+            print(lik_loop)
+
+            dS = tf.gradients(lik_loop[2], th)[0]
+            print(dS)
+            self.__dS = list(lik_loop)
+            self.__dS[2] = dS
 
             self.__lik_loop_op = lik_loop
 
@@ -347,7 +354,7 @@ class Model(object):
             raise Exception('''Model is not observable. Set different  structure
                             or parameters values''')
 
-    def simulate(self, u, t, th=None):
+    def sim(self, u, t, th=None):
         if th is None:
             th = self.__th
 
@@ -366,7 +373,7 @@ class Model(object):
 
         return rez
 
-    def likelihood(self, t, u, y, th=None):
+    def lik(self, t, u, y, th=None):
         if th is None:
             th = self.__th
 
@@ -376,7 +383,7 @@ class Model(object):
         if t.shape[0] != u.shape[1]:
             raise Exception('''t.shape[0] != u.shape[1]''')
 
-        # run simulation graph
+        # run lik graph
         with tf.Session(graph=g) as sess:
             t_ph = g.get_tensor_by_name('t:0')
             th_ph = g.get_tensor_by_name('th:0')
@@ -387,11 +394,31 @@ class Model(object):
 
         N = len(t)
         m = y.shape[0]
-        rez = list(rez)
         S = rez[2]
         S = S + N*m * 0.5 + np.log(2*math.pi)
 
         return S
+
+    def dL(self, t, u, y, th=None):
+        if th is None:
+            th = self.__th
+
+        self.__validate(th)
+        g = self.__lik_graph
+
+        if t.shape[0] != u.shape[1]:
+            raise Exception('''t.shape[0] != u.shape[1]''')
+
+        # run lik graph
+        with tf.Session(graph=g) as sess:
+            t_ph = g.get_tensor_by_name('t:0')
+            th_ph = g.get_tensor_by_name('th:0')
+            u_ph = g.get_tensor_by_name('u:0')
+            y_ph = g.get_tensor_by_name('y:0')
+            print(self.__dS)
+            rez = sess.run(self.__dS, {th_ph: th, t_ph: t, u_ph: u, y_ph: y})
+
+        return rez
 
     def mle_fit(self, th, y, u):
         pass
@@ -417,6 +444,7 @@ u = np.ones([2, 100])
 u = u * 10
 
 # run simulation
-rez = m.simulate(u, t)
+rez = m.sim(u, t)
 y = rez[1]
-rez = m.likelihood(t, u, y)
+L = m.lik(t, u, y)
+dL = m.dL(t, u, y)
