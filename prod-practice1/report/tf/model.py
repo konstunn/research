@@ -12,59 +12,73 @@ class Model(object):
     # neccessary
     def __init__(self, F, C, G, H, x0_mean, x0_cov, w_cov, v_cov, th):
         """
-        Arguments are all callables (functions) of 'th' returning numpy
-        matrices except for 'th' itself (of course)
+        Arguments are all callables (functions) of 'th' returning python lists
+        except for 'th' itself (of course)
         """
         # TODO: evaluate and cast everything to numpy matrices first
         # TODO: cast floats, ints to numpy matrices
         # TODO: allow both constant matrices and callables
 
-        th = np.array(th)
-
-        n = F(th).shape[0]
-        m = H(th).shape[0]
-        p = G(th).shape[1]
-
-        w_mean = np.zeros([w_cov(th).shape[0], 1], np.float64)
-        v_mean = np.zeros([v_cov(th).shape[0], 1], np.float64)
-
-        # check conformability
-        u = np.ones([C(th).shape[0], 1])
-        # mean must be one dimensional
-        x0_m = np.asarray(x0_mean(th))
-        x = np.random.multivariate_normal(x0_m.squeeze(), x0_cov(th))
-        w = np.random.multivariate_normal(w_mean.squeeze(), w_cov(th))
-        v = np.random.multivariate_normal(v_mean.squeeze(), v_cov(th))
-
-        x = x.reshape([n, 1])
-        w = w.reshape([p, 1])
-        v = v.reshape([m, 1])
-
-        # if model is not conformable, exception would be raised here
-        F(th) * x + C(th) * u + G(th) * w
-        H(th) * x + v
-
-        # initialize object
+        # store arguments, after that check them
         self.__F = F
         self.__C = C
         self.__G = G
         self.__H = H
         self.__x0_mean = x0_mean
         self.__x0_cov = x0_cov
-        self.__w_mean = w_mean
         self.__w_cov = w_cov
-        self.__v_mean = v_mean
         self.__v_cov = v_cov
         self.__th = th
 
+        # evaluate all functions
+        th = np.array(th)
+        F = np.array(F(th))
+        H = np.array(H(th))
+        G = np.array(G(th))
+        w_cov = np.array(w_cov(th))    # Q
+        v_cov = np.array(v_cov(th))    # R
+        x0_m = np.array(x0_mean(th))
+        x0_cov = np.array(x0_cov(th))  # P_0
+
+        # get dimensions
+        n = F.shape[0]
+        m = H.shape[0]
+        p = G.shape[1]
+        r = C.shape[1]
+
+        # create missing means
+        w_mean = np.zeros([p, 1], np.float64)
+        v_mean = np.zeros([m, 1], np.float64)
+
+        # and store them
+        self.__w_mean = w_mean
+        self.__v_mean = v_mean
+
+        # check conformability
+        u = np.ones([r, 1])
+        # generate random vectors
+        # squeeze, because mean must be one dimensional
+        x = np.random.multivariate_normal(x0_m.squeeze(), x0_cov)
+        w = np.random.multivariate_normal(w_mean.squeeze(), w_cov)
+        v = np.random.multivariate_normal(v_mean.squeeze(), v_cov)
+
+        # shape them as column-vectors
+        x = x.reshape([n, 1])
+        w = w.reshape([p, 1])
+        v = v.reshape([m, 1])
+
+        # if model is not conformable, exception would be raised (thrown) here
+        F * x + C * u + G * w
+        H * x + v
+
+        # check controllability, stability, observability
         self.__validate()
 
-        # TODO: all instances would share the same graphs, so make graphs
-        # class-wide variable
+        # if the execution reached here, all is fine so
+        # define corresponding computational tensorflow graphs
         self.__define_observations_simulation()
         self.__define_likelihood_computation()
 
-    # TODO: take the graph out of instance
     def __define_observations_simulation(self):
         # TODO: reduce code not to create extra operations
 
