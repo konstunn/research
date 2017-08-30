@@ -474,5 +474,5 @@ u = u * 10
 # run simulation
 rez = m.sim(u, t)
 y = rez[1]
-#L = m.lik(t, u, y)
-# dL = m.dL(t, u, y)
+L = m.lik(t, u, y)
+dL = m.dL(t, u, y)
