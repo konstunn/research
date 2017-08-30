@@ -15,6 +15,7 @@ class Model(object):
         Arguments are all callables (functions) of 'th' returning python lists
         except for 'th' itself (of course)
         """
+
         # TODO: evaluate and cast everything to numpy matrices first
         # TODO: cast floats, ints to numpy matrices
         # TODO: allow both constant matrices and callables
@@ -33,6 +34,7 @@ class Model(object):
         # evaluate all functions
         th = np.array(th)
         F = np.array(F(th))
+        C = np.array(C(th))
         H = np.array(H(th))
         G = np.array(G(th))
         w_cov = np.array(w_cov(th))    # Q
@@ -40,13 +42,13 @@ class Model(object):
         x0_m = np.array(x0_mean(th))
         x0_cov = np.array(x0_cov(th))  # P_0
 
-        # get dimensions
-        n = F.shape[0]
-        m = H.shape[0]
-        p = G.shape[1]
-        r = C.shape[1]
+        # get dimensions and store them as well
+        self.__n = n = F.shape[0]
+        self.__m = m = H.shape[0]
+        self.__p = p = G.shape[1]
+        self.__r = r = C.shape[1]
 
-        # create missing means
+        # generate means
         w_mean = np.zeros([p, 1], np.float64)
         v_mean = np.zeros([m, 1], np.float64)
 
@@ -85,18 +87,16 @@ class Model(object):
         self.__sim_graph = tf.Graph()
         sim_graph = self.__sim_graph
 
-        # TODO: refactor
-        r = self.__C(self.__th).shape[1]
-        m = self.__H(self.__th).shape[0]
-        n = self.__F(self.__th).shape[1]
-        p = self.__G(self.__th).shape[1]
+        r = self.__r
+        m = self.__m
+        n = self.__n
+        p = self.__p
 
         x0_mean = self.__x0_mean
         x0_cov = self.__x0_cov
 
         with sim_graph.as_default():
 
-            # TODO: make number of parameters variable
             th = tf.placeholder(tf.float64, shape=[None], name='th')
 
             # TODO: this should be continuous function of time
@@ -106,34 +106,39 @@ class Model(object):
             t = tf.placeholder(tf.float64, shape=[None], name='t')
 
             # TODO: refactor
-            F = tf.py_func(self.__F, [th], tf.float64, name='F')
+
+            # FIXME: gradient of py_func is None
+            # TODO: embed function itself in the graph, must rebuild the graph
+            # if the structure of the model change
+            # use tf.convert_to_tensor
+            F = tf.convert_to_tensor(self.__F(th), tf.float64)
             F.set_shape([n, n])
 
-            C = tf.py_func(self.__C, [th], tf.float64, name='C')
+            C = tf.convert_to_tensor(self.__C(th), tf.float64)
             C.set_shape([n, r])
 
-            G = tf.py_func(self.__G, [th], tf.float64, name='G')
+            G = tf.convert_to_tensor(self.__G(th), tf.float64)
             G.set_shape([n, p])
 
-            H = tf.py_func(self.__H, [th], tf.float64, name='H')
+            H = tf.convert_to_tensor(self.__H(th), tf.float64)
             H.set_shape([m, n])
 
-            x0_mean = tf.py_func(x0_mean, [th], tf.float64, name='x0_mean')
+            x0_mean = tf.convert_to_tensor(x0_mean(th), tf.float64)
             x0_mean = tf.squeeze(x0_mean)
 
-            x0_cov = tf.py_func(x0_cov, [th], tf.float64, name='x0_cov')
+            x0_cov = tf.convert_to_tensor(x0_cov(th), tf.float64)
             x0_cov.set_shape([n, n])
 
             x0_dist = MultivariateNormalFullCovariance(x0_mean, x0_cov,
                                                        name='x0_dist')
 
-            Q = tf.py_func(self.__w_cov, [th], tf.float64, name='w_cov')
+            Q = tf.convert_to_tensor(self.__w_cov(th))
             Q.set_shape([p, p])
 
             w_mean = self.__w_mean.squeeze()
             w_dist = MultivariateNormalFullCovariance(w_mean, Q, name='w_dist')
 
-            R = tf.py_func(self.__v_cov, [th], tf.float64, name='v_cov')
+            R = tf.convert_to_tensor(self.__v_cov(th))
             R.set_shape([m, m])
             v_mean = self.__v_mean.squeeze()
             v_dist = MultivariateNormalFullCovariance(v_mean, R, name='v_dist')
@@ -211,10 +216,10 @@ class Model(object):
         self.__lik_graph = tf.Graph()
         lik_graph = self.__lik_graph
 
-        r = self.__C(self.__th).shape[1]
-        m = self.__H(self.__th).shape[0]
-        n = self.__F(self.__th).shape[1]
-        p = self.__G(self.__th).shape[1]
+        r = self.__r
+        m = self.__m
+        n = self.__n
+        p = self.__p
 
         x0_mean = self.__x0_mean
         x0_cov = self.__x0_cov
@@ -229,34 +234,34 @@ class Model(object):
             N = tf.stack([tf.shape(t)[0]])
             N = tf.reshape(N, ())
 
-            F = tf.py_func(self.__F, [th], tf.float64, name='F')
+            F = tf.convert_to_tensor(self.__F(th), tf.float64)
             F.set_shape([n, n])
 
-            C = tf.py_func(self.__C, [th], tf.float64, name='C')
+            C = tf.convert_to_tensor(self.__C(th), tf.float64)
             C.set_shape([n, r])
 
-            G = tf.py_func(self.__G, [th], tf.float64, name='G')
+            G = tf.convert_to_tensor(self.__G(th), tf.float64)
             G.set_shape([n, p])
 
-            H = tf.py_func(self.__H, [th], tf.float64, name='H')
+            H = tf.convert_to_tensor(self.__H(th), tf.float64)
             H.set_shape([m, n])
 
-            x0_mean = tf.py_func(x0_mean, [th], tf.float64, name='x0_mean')
+            x0_mean = tf.convert_to_tensor(x0_mean(th), tf.float64)
             x0_mean.set_shape([n, 1])
 
-            P_0 = tf.py_func(x0_cov, [th], tf.float64, name='x0_cov')
+            P_0 = tf.convert_to_tensor(x0_cov(th), tf.float64)
             P_0.set_shape([n, n])
 
-            Q = tf.py_func(self.__w_cov, [th], tf.float64, name='w_cov')
+            Q = tf.convert_to_tensor(self.__w_cov(th), tf.float64)
             Q.set_shape([p, p])
 
-            R = tf.py_func(self.__v_cov, [th], tf.float64, name='v_cov')
+            R = tf.convert_to_tensor(self.__v_cov(th), tf.float64)
             R.set_shape([m, m])
+
+            I = tf.eye(n, n, dtype=tf.float64)
 
             def lik_loop_cond(k, P, S, t, u, x, y):
                 return tf.less(k, N-1)
-
-            I = tf.eye(n, n, dtype=tf.float64)
 
             def lik_loop_body(k, P, S, t, u, x, y):
 
@@ -319,38 +324,37 @@ class Model(object):
             # TODO: make a named tuple of named list
             lik_loop = tf.while_loop(lik_loop_cond, lik_loop_body,
                                      [k, P, S, t, u, x, y], name='lik_loop')
-            print(lik_loop)
 
-            dS = tf.gradients(lik_loop[2], th)[0]
-            print(dS)
-            self.__dS = list(lik_loop)
-            self.__dS[2] = dS
+            dS = tf.gradients(lik_loop[2], th)
 
             self.__lik_loop_op = lik_loop
+            self.__dS = dS
 
     def __isObservable(self, th=None):
         if th is None:
             th = self.__th
-        F = self.__F
-        C = self.__C
-        obsv_matrix = control.obsv(F(th), C(th))
+        F = np.array(self.__F(th))
+        C = np.array(self.__C(th))
+        n = self.__n
+        obsv_matrix = control.obsv(F, C)
         rank = np.linalg.matrix_rank(obsv_matrix)
-        return rank == F(th).shape[0]
+        return rank == n
 
     def __isControllable(self, th=None):
         if th is None:
             th = self.__th
-        F = self.__F
-        C = self.__C
-        ctrb_matrix = control.ctrb(F(th), C(th))
+        F = np.array(self.__F(th))
+        C = np.array(self.__C(th))
+        n = self.__n
+        ctrb_matrix = control.ctrb(F, C)
         rank = np.linalg.matrix_rank(ctrb_matrix)
-        return rank == F(th).shape[0]
+        return rank == n
 
     def __isStable(self, th=None):
         if th is None:
             th = self.__th
-        F = self.__F
-        eigv = np.linalg.eigvals(F(th))
+        F = np.array(self.__F(th))
+        eigv = np.linalg.eigvals(F)
         real_parts = np.real(eigv)
         return np.all(real_parts < 0)
 
@@ -429,7 +433,6 @@ class Model(object):
             th_ph = g.get_tensor_by_name('th:0')
             u_ph = g.get_tensor_by_name('u:0')
             y_ph = g.get_tensor_by_name('y:0')
-            print(self.__dS)
             rez = sess.run(self.__dS, {th_ph: th, t_ph: t, u_ph: u, y_ph: y})
 
         return rez
@@ -440,12 +443,23 @@ class Model(object):
 # test
 
 # model
-F = lambda th: np.diag([-th[0], -th[1]])
-C = lambda th: np.diag([th[0], th[1]])
-G = lambda th: np.diag([th[0], th[1]])
-H = lambda th: np.diag([th[0], th[1]])
-x0_m = lambda th: np.zeros([2, 1])
-x0_c = lambda th: np.diag([1e-2*th[0], 1e-2*th[1]])
+F = lambda th: [[-th[0], 0.],
+                [0., -th[1]]]
+
+C = lambda th: [[th[0], 0.],
+                [0., th[1]]]
+
+G = lambda th: [[th[0], 0.],
+                [0., th[1]]]
+
+H = lambda th: [[th[0], 0.],
+                [0., th[1]]]
+
+x0_m = lambda th: [[0.],
+                   [0.]]
+
+x0_c = lambda th: [[1e-3*th[0], 0.],
+                   [0., 1e-3*th[1]]]
 w_c = x0_c
 v_c = x0_c
 
@@ -460,5 +474,5 @@ u = u * 10
 # run simulation
 rez = m.sim(u, t)
 y = rez[1]
-L = m.lik(t, u, y)
-dL = m.dL(t, u, y)
+#L = m.lik(t, u, y)
+# dL = m.dL(t, u, y)
