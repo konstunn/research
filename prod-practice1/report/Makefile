@@ -16,4 +16,3 @@ view: main.pdf
 
 clean:
 	latexmk -f -C main.pdf
-	rm -f main.tex
