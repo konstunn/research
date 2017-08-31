@@ -6,7 +6,7 @@ R_OPTS=--vanilla -q
 main.pdf: main.tex
 	latexmk -pdf $<
 
-main.tex: main.Rnw
+# main.tex: main.Rnw \
 	R ${R_OPTS} \
 		-e "library(knitr)" \
 		-e "knit('$<')"
