@@ -44,6 +44,9 @@
 
 \DeclareMathOperator{\Sp}{Sp}
 
+\let\oldref\ref
+\renewcommand{\ref}[1]{(\oldref{#1})}
+
 \begin{document}
 
 \begin{titlepage}
@@ -327,6 +330,7 @@ H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
 
 Уравнения чувствительности для оценки вектора состояний:
 \begin{multline}
+\label{eq:senstate}
 \frac{d}{dt}
 \begin{bmatrix}
 	\hat{x}(t|t_{j-1}) \\
@@ -370,6 +374,7 @@ H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
 \item для $j = 1$
 
 \begin{equation}
+\label{eq:senstateinitcond1}
 \begin{bmatrix}
 	\hat{x}(t_0|t_0) \\
 	\frac{\partial \hat{x}(t_0|t_0)}{\partial \theta_1} \\
@@ -387,6 +392,7 @@ H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
 \item для $j = 2, 3, \ldots, N$
 
 \begin{equation}
+\label{eq:senstateinitcondj}
 \begin{bmatrix}
 	\hat{x}(t_j|t_j) \\
 	\frac{\partial \hat{x}(t_j|t_j)}{\partial \theta_1} \\
@@ -409,6 +415,7 @@ H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
 
 Уравнения чувствительности для ковариационной матрицы оценки вектора состояний:
 \begin{multline}
+	\label{eq:senscov}
 	\frac{d}{dt}
 	\begin{bmatrix}
 		P(t|t_{j-1}) \\
@@ -485,6 +492,7 @@ H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
 	\item для $j = 1$
 
 \begin{equation}
+\label{eq:senscovinitcond1}
 \begin{bmatrix}
 	P(t_0|t_0) \\
 	\frac{\partial P(t_0|t_0)}{\partial \theta_1} \\
@@ -502,6 +510,7 @@ H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
 \item для $j = 2, 3, \ldots, N$
 
 \begin{multline}
+\label{eq:senscovinitcondj}
 \begin{bmatrix}
 	P(t|t_j) \\
 	\frac{\partial P(t_j|t_j)}{\partial \theta_1} \\
@@ -536,7 +545,69 @@ H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
 Алгоритм может быть следующим:
 
 \begin{enumerate}
-\item первый пунк
+
+\item $j = 1$,\ $\frac{\partial \chi (\theta)}{\partial \theta_k} = 0$,
+ $k = 1, \ldots, s$, где $s$ --- размерность вектора параметров $\Theta$.
+
+\item Решаются уравнения чувствительности для оценки вектора состояния
+\ref{eq:senstate} и его ковариационной матрицы \ref{eq:senscov} с начальными
+условиями \ref{eq:senstateinitcond1} и \ref{eq:senscovinitcond1}
+соответственно. Получаем $\hat{x}(t_j|t_{j-1})$ и $P(t_j|t_{j-1})$.
+
+\item Вычисляются
+\[
+	B(t_j) = H P(t_j|t_{j-1}) H^T + R;
+\]
+\begin{multline}
+	\frac{\partial B(t_j)}{\partial \theta_k} =
+		\frac{\partial H}{\partial \theta_k} P(t_j|t_{j-1}) H^T + H
+		\frac{\partial P(t_j|t_{j-1})}{\theta_k} H^T + \\ +
+		H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} +
+		\frac{\partial R}{\partial \theta_k},\qquad k = 1, \ldots, s.
+\end{multline}
+
+\item Вычисляются
+\[
+	K(t_j) = P(t_j|t_{j-1}) H^T B^{-1}(t_j);
+\]
+
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
+
+\begin{multline}
+	\pd{K(t_k)}{\theta_i} = \pd{P(t_k|t_{k-1})}{\theta_i} H^T B^{-1}(t_k) +
+	P(t_k|t_{k-1}) \pd{H^T}{\theta_i} B^{-1}(t_k) - \\
+	- P(t_k|t_{k-1}) H^T B^{-1}(t_k)
+	\pd{B(t_k)}{\theta_i} B^{-1}(t_k),\qquad i = 1, \ldots, s.
+\end{multline}
+
+\item Вычисляются
+\[
+	\eps(t_j) = y(t_j) - H \hat{x}(t_j|t_{j-1});
+\]
+\[
+	\pd{\eps(t_j)}{\theta_k} = - \pd{H}{\theta_k} \hat{x}(t_j|t_{j-1}) -
+		H \pd{\hat{x}(t_j|t_{j-1})}{\theta_k},\qquad k = 1, \ldots, s.
+\]
+
+\item Вычисляется соответствующая $j$-му моменту времени составляющая градиента
+функции правдоподобия \ref{eq:llderiv}
+\begin{multline}
+	S(k) = \eps^T(t_j) B^{-1}(t_j) \pd{\eps(t_j)}{\theta_k} - \frac{1}{2}
+	\eps^T(t_j) B^{-1}(t_j) \pd{B(t_j)}{\theta_k} B^{-1}(t_j) \eps(t_j) + \\ +
+	\frac{1}{2} \Sp{ B^{-1}(t_j) \pd{B(t_j)}{\theta_k} },\qquad k = 1, \ldots, s.
+\end{multline}
+
+\item Накапливается сумма
+\[
+	\pd{\chi(\theta)}{\theta_k} = \pd{\chi(\theta)}{\theta_k} + S(k),
+		\qquad k = 1, \ldots, s.
+\]
+
+\item Если $j = N$, то вычисления прекращаются, иначе --- вычисляются следующие
+начальные условия по формулам \ref{eq:senstateinitcondj} и
+\ref{eq:senscovinitcondj}, $j$ заменяется на $j + 1$, и осуществляется переход
+на шаг 2.
+
 \end{enumerate}
 
 \subsubsection{Программный метод автоматического дифференцирования}
