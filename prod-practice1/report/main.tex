@@ -7,6 +7,11 @@
 
 \usepackage{setspace}
 
+\usepackage{graphicx}
+\graphicspath{ {figure/} }
+
+\usepackage{float}
+
 \usepackage[T2A]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[russian]{babel}
@@ -365,7 +370,8 @@ H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
 	\frac{\partial{G}}{\partial \theta_1} \\
 	\vdots \\
 	\frac{\partial{G}}{\partial \theta_s}
-\end{bmatrix} u(t),\quad t_{j-1} \le t \le t_j,\ j=1,\ldots,N.
+\end{bmatrix} u(t),\\
+\hspace{\fill} t_{j-1} \le t \le t_j,\ j=1,\ldots,N. \hspace{\fill}
 \end{multline}
 
 Начальные условия:
@@ -544,10 +550,11 @@ H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
 
 Алгоритм может быть следующим:
 
-\begin{enumerate}
+\begin{enumerate} 
 
-\item $j = 1$,\ $\frac{\partial \chi (\theta)}{\partial \theta_k} = 0$,
- $k = 1, \ldots, s$, где $s$ --- размерность вектора параметров $\Theta$.
+\item $j = 1$,\enskip $\frac{\partial \chi (\theta)}{\partial \theta_k} = 0$,
+ \enskip $k = 1, \ldots, s$,\quad где $s$ --- размерность вектора \\ параметров
+ $\Theta$.
 
 \item Решаются уравнения чувствительности для оценки вектора состояния
 \ref{eq:senstate} и его ковариационной матрицы \ref{eq:senscov} с начальными
@@ -566,13 +573,12 @@ H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
 		\frac{\partial R}{\partial \theta_k},\qquad k = 1, \ldots, s.
 \end{multline}
 
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
+
 \item Вычисляются
 \[
 	K(t_j) = P(t_j|t_{j-1}) H^T B^{-1}(t_j);
 \]
-
-\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
-
 \begin{multline}
 	\pd{K(t_k)}{\theta_i} = \pd{P(t_k|t_{k-1})}{\theta_i} H^T B^{-1}(t_k) +
 	P(t_k|t_{k-1}) \pd{H^T}{\theta_i} B^{-1}(t_k) - \\
@@ -648,7 +654,21 @@ H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
 Следует отметить, очевидно, что с помощью этого метода также можно вычислять
 и производные высших порядков быстро и без потери точности.
 
-% вставить рисунки
+\begin{figure}[H]
+\includegraphics[width=\textwidth]{tree-def}
+\caption{Простой пример вычислительного графа \cite{colah}.}
+\end{figure}
+
+\begin{figure}[H]
+\includegraphics[width=\textwidth]{tree-eval-derivs}
+\caption{Пример вычислительного графа с определением производных \cite{colah}.}
+\end{figure}
+
+\begin{figure}[H]
+\includegraphics[width=\textwidth]{tree-forwardmode}
+\caption{Вычисление произодной графа \cite{colah}.}
+\end{figure}
+
 
 Наиболее популярные системы, в которых реализовано автоматическое
 дифференцирование: TensorFlow, Theano, Torch. Существует большое число других
@@ -702,6 +722,10 @@ H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
 \bibitem{chubich} Активная параметрическая идентификация стохастических
 динамических систем. Оценивание параметров: учеб. пособие / В.М. Чубич, Е.В.
 Филиппова. --- Новосибирск: Изд-во НГТУ, 2016. --- 63 с.
+
+\bibitem{colah} Olah, Christopher. ''Calculus on Computational Graphs:
+Backpropagation'', colah's blog. August 31, 2015.
+Link: colah.github.io/posts/2015-08-Backprop
 
 \bibitem{shalom} Bar-Shalom, Yaakov. Estimation with Application to Tracking
 and Navigation / by Yaakov Bar-Shalom, X.-Rong Li, Thiagalingam Kirubarajan. 
