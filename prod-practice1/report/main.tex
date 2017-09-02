@@ -11,8 +11,8 @@
 \usepackage[utf8]{inputenc}
 \usepackage[russian]{babel}
 
-\usepackage[a4paper,margin=1cm,footskip=.5cm,left=2cm,right=1.5cm,top=1.5cm,
-		bottom=1.5cm]{geometry}
+\usepackage[a4paper,margin=1cm,footskip=1cm,left=2cm,right=1.5cm,top=1.5cm,
+		bottom=2cm]{geometry}
 
 \usepackage{textcase}
 \usepackage{csquotes}
@@ -297,6 +297,7 @@ $j$ заменяется на $j+1$ и осуществляется перехо
 Аналитическое выражение производных критерия следующее \cite{denisov}:
 
 \begin{multline}
+	\label{eq:llderiv}
 	\frac{\partial \chi(\theta)}{\partial \theta_k} = \sum\limits^{N}_{j=1}
 	\left[
 	\eps^{T}(t_j) B^{-1}(t_j) \frac{\partial \eps(t_j)}{\partial \theta_k} -
@@ -306,13 +307,237 @@ $j$ заменяется на $j+1$ и осуществляется перехо
 	\Sp ( B^{-1}(t_j) \frac{\partial B(t_j)}{\partial \theta_k} )
 	\right] ,\ k = 1,\ldots,s,
 \end{multline}
+где $s$ --- размерность вектора неизвестных параметров $\Theta$.
+
+В выражении \ref{eq:llderiv} частные производные $\frac{\partial \eps(t_j)}
+{\partial \theta_k}$ и $\frac{\partial B(t_j)}{\partial \theta_k}$ вычисляются
+с помощью следующим выражений:
+\begin{equation}
+\frac{\partial \eps(t_j)}{\partial \theta_k} = - \frac{\partial H}
+{\partial \theta_k} \hat{x}(t_j|t_{j-1}) - H \frac{\partial \hat{x}(t_j|t_{j-1})}
+{\partial \theta_k},\\
+\end{equation}
+
+\begin{equation}
+\frac{\partial B(t_j)}{\partial \theta_k} = \frac{\partial H}{\partial \theta_k}
+P(t_j|t_{j-1}) H^T + H \frac{\partial P(t_j|t_{j-1})}{\partial \theta_k} H^T +
+H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
+{\partial \theta_k}.
+\end{equation}
+
+Уравнения чувствительности для оценки вектора состояний:
+\begin{multline}
+\frac{d}{dt}
+\begin{bmatrix}
+	\hat{x}(t|t_{j-1}) \\
+	\frac{\partial \hat{x}(t|t_{j-1})}{\partial \theta_1} \\
+	\vdots \\
+	\frac{\partial \hat{x}(t|t_{j-1})}{\partial \theta_s}
+\end{bmatrix} =
+\begin{bmatrix}
+	F \hat{x}(t|t_{j-1}) + G u(t) \\
+	\frac{\partial F}{\partial \theta_1} \hat{x}(t|t_{j-1}) +
+		F \frac{\partial \hat{x}(t|t_{j-1})}{\partial \theta_1} +
+		\frac{\partial G}{\partial \theta_1} u(t) \\
+	\vdots  \\
+	\frac{\partial F}{\partial \theta_s} \hat{x}(t|t_{j-1}) +
+		F \frac{\partial \hat{x}(t|t_{j-1})}{\partial \theta_s} +
+		\frac{\partial G}{\partial \theta_s} u(t)
+\end{bmatrix} = \\ =
+\begin{bmatrix}
+	F & 0 & \cdots & 0 \\
+	\frac{\partial F}{\partial \theta_1} & F & \cdots & 0 \\
+	\vdots & \vdots & \ddots & \vdots \\
+	\frac{\partial F}{\partial \theta_s} & 0 & \cdots & F
+\end{bmatrix} \cdot
+\begin{bmatrix}
+	\hat{x}(t|t_{j-1}) \\
+	\frac{\partial \hat{x}(t|t_{j-1})}{\partial \theta_1} \\
+	\vdots \\
+	\frac{\partial \hat{x}(t|t_{j-1})}{\partial \theta_s} \\
+\end{bmatrix} +
+\begin{bmatrix}
+	G \\
+	\frac{\partial{G}}{\partial \theta_1} \\
+	\vdots \\
+	\frac{\partial{G}}{\partial \theta_s}
+\end{bmatrix} u(t),\quad t_{j-1} \le t \le t_j,\ j=1,\ldots,N.
+\end{multline}
+
+Начальные условия:
+\begin{itemize}
+
+\item для $j = 1$
+
+\begin{equation}
+\begin{bmatrix}
+	\hat{x}(t_0|t_0) \\
+	\frac{\partial \hat{x}(t_0|t_0)}{\partial \theta_1} \\
+	\vdots \\
+	\frac{\partial \hat{x}(t_0|t_0)}{\partial \theta_s}
+\end{bmatrix} =
+\begin{bmatrix}
+	\overline{x_0} \\
+	\frac{\partial \overline{x_0}}{\partial \theta_1} \\
+	\vdots \\
+	\frac{\partial \overline{x_0}}{\partial \theta_s}
+\end{bmatrix}
+\end{equation}
+
+\item для $j = 2, 3, \ldots, N$
+
+\begin{equation}
+\begin{bmatrix}
+	\hat{x}(t_j|t_j) \\
+	\frac{\partial \hat{x}(t_j|t_j)}{\partial \theta_1} \\
+	\vdots \\
+	\frac{\partial \hat{x}(t_j|t_j)}{\partial \theta_s}
+\end{bmatrix} =
+\begin{bmatrix}
+	\hat{x}(t_j|t_{j-1}) + K(t_j) \eps(t_j) \\
+	\frac{\partial \hat{x}(t_j|t_{j-1})}{\partial \theta_1} + \frac{\partial K(t_j)}
+		{\partial \theta_1} \eps(t_j) + K(t_j) \frac{\partial \eps(t_j)}
+		{\partial \theta_1} \\
+		\vdots \\
+	\frac{\partial \hat{x}(t_j|t_{j-1})}{\partial \theta_s} + \frac{\partial K(t_j)}
+		{\partial \theta_s} \eps(t_j) + K(t_j) \frac{\partial \eps(t_j)}
+		{\partial \theta_s}
+\end{bmatrix}.
+\end{equation}
+
+\end{itemize}
+
+Уравнения чувствительности для ковариационной матрицы оценки вектора состояний:
+\begin{multline}
+	\frac{d}{dt}
+	\begin{bmatrix}
+		P(t|t_{j-1}) \\
+		\frac{\partial P(t|t_{j-1})}{\partial \theta_1} \\
+		\vdots \\
+		\frac{\partial P(t|t_{j-1})}{\partial \theta_s}
+	\end{bmatrix} = \\
+	= \begin{bmatrix}
+		F P(t|t_{j-1}) + P(t|t_{j-1}) F^T + G Q G^T \\
+		\frac{\partial F}{\partial \theta_1} P(t|t_{j-1}) +
+			F \frac{\partial P(t|t_{j-1})}{\partial \theta_1} +
+			\frac{\partial P(t|t_{j-1})}{\partial \theta_1} F^T + \hspace{\fill} \\
+			\hspace{8em} + P(t|t_{j-1}) \frac{\partial F^T}{\partial \theta_1} +
+			\frac{\partial G}{\partial \theta_1} Q G^T +
+			G \frac{\partial Q}{\partial \theta_1} G^T +
+			G Q \frac{\partial G^T}{\partial \theta_1} \\
+		\vdots \\
+		\frac{\partial F}{\partial \theta_s} P(t|t_{j-1}) +
+			F \frac{\partial P(t|t_{j-1})}{\partial \theta_s} +
+			\frac{\partial P(t|t_{j-1})}{\partial \theta_s} F^T + \hspace{\fill} \\
+			\hspace{8em} + P(t|t_{j-1}) \frac{\partial F^T}{\partial \theta_s} +
+			\frac{\partial G}{\partial \theta_s} Q G^T +
+			G \frac{\partial Q}{\partial \theta_s} G^T +
+			G Q \frac{\partial G^T}{\partial \theta_s}
+	\end{bmatrix}  = \\
+	= \begin{bmatrix}
+		F & 0 & \cdots & 0 \\
+		\frac{\partial F}{\partial \theta_1} & F & \cdots & 0 \\
+		\vdots & \vdots & \ddots & \vdots \\
+		\frac{\partial F}{\partial \theta_s} & 0 & \cdots & F \\
+	\end{bmatrix}
+	\begin{bmatrix}
+		P(t|t_{j-1}) \\
+		\frac{\partial P(t|t_{j-1})}{\partial \theta_1} \\
+		\vdots \\
+		\frac{\partial P(t|t_{j-1})}{\partial \theta_s}
+	\end{bmatrix} +
+	\begin{bmatrix}
+	P(t|t_{j-1}) & 0 & \cdots & 0 \\
+	\frac{\partial P(t|t_{j-1})}{\partial \theta_1} & P(t|t_{j-1}) & \cdots & 0 \\
+	\vdots & \vdots & \ddots & \vdots \\
+	\frac{\partial P(t|t_{j-1})}{\partial \theta_s} & 0 & \cdots & P(t|t_{j-1})
+	\end{bmatrix}
+	\begin{bmatrix}
+		F^T \\
+		\frac{\partial F^T}{\partial \theta_1} \\
+		\vdots \\
+		\frac{\partial F^T}{\partial \theta_s}
+	\end{bmatrix} + \\
+	+ \begin{bmatrix}
+		G Q G^T\\
+		\frac{\partial G}{\partial \theta_1} Q G^T \\
+		\vdots \\
+		\frac{\partial G}{\partial \theta_s} Q G^T
+	\end{bmatrix} +
+	\begin{bmatrix}
+		0 \\
+		G \frac{\partial Q}{\partial \theta_1} G^T \\
+		\vdots \\
+		G \frac{\partial Q}{\partial \theta_s} G^T
+	\end{bmatrix} +
+	\begin{bmatrix}
+		0 \\
+		G Q \frac{\partial G^T}{\partial \theta_1} \\
+		\vdots \\
+		G Q \frac{\partial G^T}{\partial \theta_s}
+	\end{bmatrix},\\ \hspace{\fill} t_{j-1} \le t \le t_j, \quad j = 1, \ldots, N. \hspace{\fill}
+\end{multline}
+
+\newpage
+Начальные условия:
+\begin{itemize}
+
+	\item для $j = 1$
+
+\begin{equation}
+\begin{bmatrix}
+	P(t_0|t_0) \\
+	\frac{\partial P(t_0|t_0)}{\partial \theta_1} \\
+	\vdots \\
+	\frac{\partial P(t_0|t_0)}{\partial \theta_s}
+\end{bmatrix} =
+\begin{bmatrix}
+	P_0 \\
+	\frac{\partial P_0}{\partial \theta_1} \\
+	\vdots \\
+	\frac{\partial P_0}{\partial \theta_s}
+\end{bmatrix}
+\end{equation}
+
+\item для $j = 2, 3, \ldots, N$
+
+\begin{multline}
+\begin{bmatrix}
+	P(t|t_j) \\
+	\frac{\partial P(t_j|t_j)}{\partial \theta_1} \\
+ 	\vdots \\
+	\frac{\partial P(t_j|t_j)}{\partial \theta_s}
+\end{bmatrix} =
+\begin{bmatrix}
+	\left\{ I - K(t_j) H \right\} P(t_j|t_{j-1}) \\
+	\left[ - \frac{\partial K(t_j)}{\partial \theta_1} H - K(t_j)
+		\frac{\partial H}{\partial \theta_1} \right] P(t_j|t_{j-1}) + 
+		\left\{ I - K(t_j) H \right\}
+		\frac{\partial P(t_j|t_{j-1})}{\partial \theta_1} \\
+	\vdots \\
+	\left[ - \frac{\partial K(t_j)}{\partial \theta_s} H - K(t_j)
+		\frac{\partial H}{\partial \theta_s} \right] P(t_j|t_{j-1}) + 
+		\left\{ I - K(t_j) H \right\}
+		\frac{\partial P(t_j|t_{j-1})}{\partial \theta_s} \\
+\end{bmatrix},
+\end{multline}
+
+\end{itemize}
+
+где
+\begin{multline}
+	\frac{\partial K(t_j)}{\partial \theta_k} =
+		\frac{\partial P(t_j|t_{j-1})}{\partial \theta_k} H^T B^{-1}(t_j) + 
+		P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} B^{-1}(t_j) - \\ -
+		P(t_j|t{j-1}) H^{-1} B^{-1}(t_j) \frac{\partial B(t_j)}{\partial \theta_k}
+		B^{-1}(t_j).
+\end{multline}
 
 Алгоритм может быть следующим:
 
 \begin{enumerate}
-\item  item
+\item первый пунк
 \end{enumerate}
-
 
 \subsubsection{Программный метод автоматического дифференцирования}
 
@@ -390,13 +615,13 @@ $j$ заменяется на $j+1$ и осуществляется перехо
 \section*{Заключение}
 \addcontentsline{toc}{section}{Заключение}
 
+Заключение.
+
 \begin{thebibliography}{9}
 
 \begin{hyphenrules}{nohyphenation} 
 
 \begin{sloppypar}
-
-%\item TODO: cite Чубич, Черникова ! mono + guide
 
 \bibitem{denisov} Активная параметрическая идентификация стохастических
 линейных систем: монография / В.И. Денисов, В.М. Чубич, О.С. Черникова, Д.И.
