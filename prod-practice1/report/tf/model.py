@@ -4,6 +4,7 @@ import tensorflow as tf
 import control
 import numpy as np
 from tensorflow.contrib.distributions import MultivariateNormalFullCovariance
+import scipy
 
 
 class Model(object):
@@ -132,13 +133,13 @@ class Model(object):
             x0_dist = MultivariateNormalFullCovariance(x0_mean, x0_cov,
                                                        name='x0_dist')
 
-            Q = tf.convert_to_tensor(self.__w_cov(th))
+            Q = tf.convert_to_tensor(self.__w_cov(th), tf.float64)
             Q.set_shape([p, p])
 
             w_mean = self.__w_mean.squeeze()
             w_dist = MultivariateNormalFullCovariance(w_mean, Q, name='w_dist')
 
-            R = tf.convert_to_tensor(self.__v_cov(th))
+            R = tf.convert_to_tensor(self.__v_cov(th), tf.float64)
             R.set_shape([m, m])
             v_mean = self.__v_mean.squeeze()
             v_dist = MultivariateNormalFullCovariance(v_mean, R, name='v_dist')
@@ -359,18 +360,22 @@ class Model(object):
         return np.all(real_parts < 0)
 
     def __validate(self, th=None):
+        # FIXME: do not raise exceptions
         # TODO: prove, print matrices and their criteria
         if not self.__isControllable(th):
-            raise Exception('''Model is not controllable. Set different
-                            structure or parameters values''')
+            # raise Exception('''Model is not controllable. Set different
+            #                structure or parameters values''')
+            pass
 
         if not self.__isStable(th):
-            raise Exception('''Model is not stable. Set different structure or
-                            parameters values''')
+            # raise Exception('''Model is not stable. Set different structure or
+            #                parameters values''')
+            pass
 
         if not self.__isObservable(th):
-            raise Exception('''Model is not observable. Set different  structure
-                            or parameters values''')
+            # raise Exception('''Model is not observable. Set different
+            #                structure or parameters values''')
+            pass
 
     def sim(self, u, t, th=None):
         if th is None:
@@ -395,7 +400,10 @@ class Model(object):
         if th is None:
             th = self.__th
 
-        self.__validate(th)
+        # to numpy 1D array
+        th = np.array(th).squeeze()
+
+        #self.__validate(th)
         g = self.__lik_graph
 
         if t.shape[0] != u.shape[1]:
@@ -417,11 +425,20 @@ class Model(object):
 
         return S
 
+    def __L(self, th, t, u, y):
+        return self.lik(t, u, y, th)
+
+    def __dL(self, th, t, u, y):
+        return self.dL(t, u, y, th)
+
     def dL(self, t, u, y, th=None):
         if th is None:
             th = self.__th
 
-        self.__validate(th)
+        # to 1D numpy array
+        th = np.array(th).squeeze()
+
+        #self.__validate(th)
         g = self.__lik_graph
 
         if t.shape[0] != u.shape[1]:
@@ -435,10 +452,14 @@ class Model(object):
             y_ph = g.get_tensor_by_name('y:0')
             rez = sess.run(self.__dS, {th_ph: th, t_ph: t, u_ph: u, y_ph: y})
 
-        return rez
+        return rez[0]
 
-    def mle_fit(self, th, y, u):
-        pass
+    def mle_fit(self, th, t, u, y):
+        # TODO: call slsqp
+        th0 = th
+        th = scipy.optimize.minimize(self.__L, th0, args=(t, u, y),
+                                     jac=self.__dL)
+        return th
 
 # test
 
@@ -446,25 +467,27 @@ class Model(object):
 F = lambda th: [[-th[0], 0.],
                 [0., -th[1]]]
 
-C = lambda th: [[th[0], 0.],
-                [0., th[1]]]
+C = lambda th: [[1.0, 0.],
+                [0., 1.0]]
 
-G = lambda th: [[th[0], 0.],
-                [0., th[1]]]
+G = lambda th: [[1.0, 0.],
+                [0., 1.0]]
 
-H = lambda th: [[th[0], 0.],
-                [0., th[1]]]
+H = lambda th: [[1.0, 0.],
+                [0., 1.0]]
 
 x0_m = lambda th: [[0.],
                    [0.]]
 
-x0_c = lambda th: [[1e-3*th[0], 0.],
-                   [0., 1e-3*th[1]]]
+x0_c = lambda th: [[1e-3, 0.],
+                   [0., 1e-3]]
 w_c = x0_c
 v_c = x0_c
 
 th = [1.0, 1.0]
 
+# TODO: check if there are extra components in 'th'
+# TODO: measure model creation time
 m = Model(F, C, G, H, x0_m, x0_c, w_c, v_c, th)
 
 t = np.linspace(0, 10, 100)
@@ -476,3 +499,6 @@ rez = m.sim(u, t)
 y = rez[1]
 L = m.lik(t, u, y)
 dL = m.dL(t, u, y)
+th0 = [0.4, 0.5]
+print('identificating')
+th_e = m.mle_fit(th0, t, u, y)
