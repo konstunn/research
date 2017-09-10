@@ -621,9 +621,9 @@ H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
 Рассматриваемый программный метод берет свое начало из задач машинного обучения
 глубоких нейронных сетей, которые в настоящее время являются популярным
 объектом научных исследований, образующие целое новое научное направление ---
-глубинное обучение. Глубокие нейронные сети применяются для решения широкого
-класса практических задач распознавания, классификации, предсказания, обработки
-и анализа ествесственных языков и многих других.
+глубинное обучение (deep learning). Глубокие нейронные сети применяются для
+решения широкого класса практических задач распознавания, классификации,
+предсказания, обработки и анализа ествесственных языков и многих других.
 
 Глубокими нейронными сетями называются такие сети, которые имеют в своем
 составе большое число скрытых слоев нейронов, и, следовательно, суммарно
@@ -669,10 +669,10 @@ H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
 \caption{Вычисление произодной графа \cite{colah}.}
 \end{figure}
 
-
 Наиболее популярные системы, в которых реализовано автоматическое
-дифференцирование: TensorFlow, Theano, Torch. Существует большое число других
-систем и средств. В данной работе используется система TensorFlow.
+дифференцирование: TensorFlow \cite{tf}, Theano \cite{theano},
+Torch\cite{torch}. Существует большое число других систем и средств. В данной
+работе используется система TensorFlow.
 
 \subsection{Программные аспекты реализации вычислений}
 
@@ -701,6 +701,12 @@ H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
 \section[Результаты экспериментальных модельных исследований]
 {Результаты экспериментальных модельных \\исследований} 
 
+\subsection{Спецификация модели}
+
+\subsection{Моделирование отклика}
+
+\subsection{Оценивание параметров}
+
 Результаты.
 
 \section*{Заключение}
@@ -723,16 +729,31 @@ H P(t_j|t_{j-1}) \frac{\partial H^T}{\partial \theta_k} + \frac{\partial R}
 динамических систем. Оценивание параметров: учеб. пособие / В.М. Чубич, Е.В.
 Филиппова. --- Новосибирск: Изд-во НГТУ, 2016. --- 63 с.
 
-\bibitem{colah} Olah, Christopher. ''Calculus on Computational Graphs:
+\bibitem{colah} Chris Olah. ''Calculus on Computational Graphs:
 Backpropagation'', colah's blog. August 31, 2015.
 Link: colah.github.io/posts/2015-08-Backprop
 
-\bibitem{shalom} Bar-Shalom, Yaakov. Estimation with Application to Tracking
-and Navigation / by Yaakov Bar-Shalom, X.-Rong Li, Thiagalingam Kirubarajan. 
-	- 2001.
+\bibitem{tf} Martín Abadi, Ashish Agarwal, Paul Barham, Eugene Brevdo,
+Zhifeng Chen, Craig Citro, Greg S. Corrado, Andy Davis,
+Jeffrey Dean, Matthieu Devin, Sanjay Ghemawat, Ian Goodfellow,
+Andrew Harp, Geoffrey Irving, Michael Isard, Rafal Jozefowicz, Yangqing Jia,
+Lukasz Kaiser, Manjunath Kudlur, Josh Levenberg, Dan Mané, Mike Schuster,
+Rajat Monga, Sherry Moore, Derek Murray, Chris Olah, Jonathon Shlens,
+Benoit Steiner, Ilya Sutskever, Kunal Talwar, Paul Tucker,
+Vincent Vanhoucke, Vijay Vasudevan, Fernanda Viégas,
+Oriol Vinyals, Pete Warden, Martin Wattenberg, Martin Wicke,
+Yuan Yu, and Xiaoqiang Zheng.
+TensorFlow: Large-scale machine learning on heterogeneous systems,
+2015. Software available from tensorflow.org.
 
-\bibitem{ogarkov} Огарков М. А. Методы статистического оценивания параметров
-случайных процессов. --- М.: Энергоатомиздат, 1990. --- 208 с.: ил.
+\bibitem{theano} J. Bergstra, O. Breuleux, F. Bastien, P. Lamblin, R. Pascanu,
+G. Desjardins, J. Turian, D. Warde-Farley and Y. Bengio. “Theano: A CPU and GPU
+Math Expression Compiler”. Proceedings of the Python for Scientific Computing
+Conference (SciPy) 2010. June 30 - July 3, Austin, TX
+
+\bibitem{torch} Collobert, Ronan, Koray Kavukcuoglu, and Clément Farabet.
+"Torch7: A matlab-like environment for machine learning." BigLearn, NIPS
+Workshop. No. EPFL-CONF-192376. 2011.
 
 \end{sloppypar}
 
