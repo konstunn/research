@@ -4,3 +4,4 @@
 .ropeproject
 *.exrc
 *.pyc
+*.out
