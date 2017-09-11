@@ -458,7 +458,7 @@ class Model(object):
         # TODO: call slsqp
         th0 = th
         th = scipy.optimize.minimize(self.__L, th0, args=(t, u, y),
-                                     jac=self.__dL)
+                                     jac=self.__dL, options={'disp': True})
         return th
 
 # test
@@ -499,6 +499,6 @@ rez = m.sim(u, t)
 y = rez[1]
 L = m.lik(t, u, y)
 dL = m.dL(t, u, y)
-th0 = [0.4, 0.5]
+th0 = [0.9, 0.9]
 print('identificating')
 th_e = m.mle_fit(th0, t, u, y)
