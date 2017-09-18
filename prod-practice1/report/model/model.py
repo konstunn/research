@@ -1,10 +1,13 @@
 
 import math
+import os
 import tensorflow as tf
 import control
 import numpy as np
 from tensorflow.contrib.distributions import MultivariateNormalFullCovariance
 import scipy
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 class Model(object):
