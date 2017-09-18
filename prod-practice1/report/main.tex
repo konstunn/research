@@ -714,13 +714,13 @@ Torch\cite{torch}. Существует большое число других �
 
 Число параметров ($\theta_i$) $s = 2$. Параметры являются диагональными
 элементами матрицы перехода со знаком ``минус'', ожидание начального состояния
-нулевое, все ковариации равны $0.001$, ожидание начального состояния нулевое.
+нулевое, все ковариации равны $0.01$, ожидание начального состояния нулевое.
 Матрицы управления, наблюдения, влияния шума --- единичные.
 \[
 	\frac{d}{dt}x(t) =
 		\begin{pmatrix}
 			-\theta_1 & 0 \\
-			0 &-\theta_2
+			0 & -\theta_2
 		\end{pmatrix}
 		\vec{x}(t) +
 		\begin{pmatrix}
@@ -752,7 +752,7 @@ Torch\cite{torch}. Существует большое число других �
 	\vec{v}(t_k) = \begin{bmatrix} v_1(t_k) \\ v_2(t_k) \end{bmatrix},\
 \]
 \[
-	R = Q = P_0 = \begin{pmatrix} 0.001 & 0 \\ 0 & 0.001 \end{pmatrix},\
+	R = Q = P_0 = \begin{pmatrix} 0.01 & 0 \\ 0 & 0.01 \end{pmatrix},\
 	\overline{x_0} = \begin{pmatrix} 0 \\ 0 \end{pmatrix}
 \]
 
@@ -832,7 +832,7 @@ savefig('figure/y0.pdf', bbox_inches='tight')
 # Include the plot in the current LaTeX document
 print(r'\begin{figure}[H]')
 print(r'\includegraphics[width=\textwidth]{y0.pdf}')
-print(r'\caption{Смоделированный отклик. Входной канал 1.}')
+print(r'\caption{Смоделированный отклик системы. Выходной канал 1.}')
 print(r'\end{figure}')
 
 clf()
@@ -844,7 +844,7 @@ savefig('figure/y1.pdf', bbox_inches='tight')
 # Include the plot in the current LaTeX document
 print(r'\begin{figure}[H]')
 print(r'\includegraphics[width=\textwidth]{y1.pdf}')
-print(r'\caption{Смоделированный отклик. Входной канал 2.}')
+print(r'\caption{Смоделированный отклик системы. Выходной канал 2.}')
 print(r'\end{figure}')
 
 \end{pycode}
@@ -853,7 +853,7 @@ print(r'\end{figure}')
 \subsection{Оценивание параметров}
 
 Проведем процедуру идентификации по одноточечному плану из некоторого
-начального приближения.
+начального приближения по смоделированному отклику.
 
 \section*{Заключение}
 \addcontentsline{toc}{section}{Заключение}
@@ -880,11 +880,15 @@ print(r'\end{figure}')
 
 \bibitem{colah} Chris Olah. ''Calculus on Computational Graphs:
 Backpropagation'', colah's blog. August 31, 2015.
-Link: colah.github.io/posts/2015-08-Backprop
+URL: colah.github.io/posts/2015-08-Backprop
 
+\bibitem{ad-ml-survey} A. Baydin, B. Pearlmutter, A. Radul, J. Siskind.
+Automatic Differentiation in Machine Learning: a Survey. {arXiv:0706.1234 [cs.SC]}
+
+% плохое оформление библиографии или плохой источник?
 \bibitem{tf} Martín Abadi, Ashish Agarwal, Paul Barham, et al.
 TensorFlow: Large-scale machine learning on heterogeneous systems,
-2015. Software available from tensorflow.org.
+2015. Software available from tensorflow.org. {arXiv:1603.04467 [cs.DC]}
 
 \bibitem{theano} J. Bergstra, O. Breuleux, F. Bastien, et al. “Theano: A CPU
 and GPU Math Expression Compiler”. Proceedings of the Python for Scientific
@@ -902,7 +906,7 @@ Workshop. No. EPFL-CONF-192376. 2011.
 
 \begin{appendices}
 
-\section{Исходные тексты программ}
+\section{Исходные тексты}
 
 \renewcommand{\baselinestretch}{1}
 \begin{pyverbatim}[][fontsize=\small]
