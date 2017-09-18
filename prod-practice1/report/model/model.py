@@ -495,11 +495,9 @@ class Model(object):
 
         return rez[0]
 
-    def mle_fit(self, th, t, u, y):
-        # TODO: call slsqp
-        th0 = th
+    def mle_fit(self, th0, t, u, y):
         th = scipy.optimize.minimize(self.__L, th0, args=(t, u, y),
-                                     jac=self.__dL, options={'disp': True})
+                                     jac=self.__dL)
         return th
 
 # test
