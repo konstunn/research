@@ -215,6 +215,7 @@ class Model(object):
             self.__sim_loop_op = sim_loop
 
     # defines graph
+    # TODO: get rid of tf.while_loop
     def __define_likelihood_computation(self):
 
         self.__lik_graph = tf.Graph()
@@ -444,7 +445,7 @@ class Model(object):
         # to numpy 1D array
         th = np.array(th).squeeze()
 
-        #self.__validate(th)
+        # self.__validate(th)
         g = self.__lik_graph
 
         if t.shape[0] != u.shape[1]:
@@ -461,6 +462,8 @@ class Model(object):
 
         N = len(t)
         m = y.shape[0]
+
+        # TODO: make rez namedtuple
         S = rez[2]
         S = S + N*m * 0.5 + np.log(2*math.pi)
 
@@ -479,7 +482,7 @@ class Model(object):
         # to 1D numpy array
         th = np.array(th).squeeze()
 
-        #self.__validate(th)
+        # self.__validate(th)
         g = self.__lik_graph
 
         if t.shape[0] != u.shape[1]:
@@ -500,44 +503,10 @@ class Model(object):
                                      jac=self.__dL)
         return th
 
-# test
+    def dump(filename):
+        # TODO: manually serialize every needed thing
+        pass
 
-# model
-F = lambda th: [[-th[0], 0.],
-                [0., -th[1]]]
-
-C = lambda th: [[1.0, 0.],
-                [0., 1.0]]
-
-G = lambda th: [[1.0, 0.],
-                [0., 1.0]]
-
-H = lambda th: [[1.0, 0.],
-                [0., 1.0]]
-
-x0_m = lambda th: [[0.],
-                   [0.]]
-
-x0_c = lambda th: [[1e-3, 0.],
-                   [0., 1e-3]]
-w_c = x0_c
-v_c = x0_c
-
-th = [1.0, 1.0]
-
-# TODO: check if there are extra components in 'th'
-# TODO: measure model creation time
-m = Model(F, C, G, H, x0_m, x0_c, w_c, v_c, th)
-
-t = np.linspace(0, 10, 100)
-u = np.ones([2, 100])
-u = u * 10
-
-# run simulation
-rez = m.sim(u, t)
-y = rez[1]
-L = m.lik(t, u, y)
-dL = m.dL(t, u, y)
-th0 = [0.9, 0.9]
-print('identificating')
-th_e = m.mle_fit(th0, t, u, y)
+    def load(filename):
+        # TODO: manually deserialize every needed thing
+        pass
