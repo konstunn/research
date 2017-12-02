@@ -781,13 +781,13 @@ $\begin{pmatrix} \theta_1 & \theta_2 \end{pmatrix}$ --- вектор оцени�
 
 \begin{pythontexcustomcode}{py}
 import dill as pickle
+from model.model import Model
+import numpy as np
+import pylatex
 \end{pythontexcustomcode}
 
 \renewcommand{\baselinestretch}{1}
 \begin{pycode}[model]
-from model.model import Model
-import numpy as np
-
 F = lambda th: [[-th[0], 0.],
                 [0., -th[1]]]
 
@@ -808,7 +808,7 @@ x0_c = lambda th: [[1e-2, 0.],
 w_c = x0_c
 v_c = x0_c
 
-th = [1.0, 1.0]
+th = [1.0, 1.1]
 
 # TODO: check if there are extra components in 'th'
 # TODO: measure model creation time
@@ -870,8 +870,6 @@ print(r'\end{figure}')
 начального приближения по смоделированному отклику.
 
 \begin{pycode}[model]
-import pickle
-
 th0 = [0.8, 1.2]
 
 
@@ -891,10 +889,6 @@ with open('rez.pkl', 'wb') as f:
 \end{pycode}
 
 \begin{pycode}
-import pickle
-import pylatex
-import numpy as np
-
 pytex.add_dependencies('rez.pkl')
 
 with open('rez.pkl', 'rb') as f:
@@ -936,19 +930,21 @@ th_t = th_t.dumps()
 	\chi\left(\hat{\theta}\right) = \pyc{print(fit.fun)}
 \]
 Относительная погрешность оценивания в пространстве параметров
+
 \begin{pycode}
 th = rez['fit']['x']
 th_t = rez['th_true']
 rtol = np.linalg.norm(th_t - th) / np.linalg.norm(th_t)
 rtol_p = "%.3f" % (rtol * 100)
 \end{pycode}
+
 \[
 	\frac{||\theta^* -\ \hat{\theta}||}{||\theta^*||} = \pyc{print(rtol)}
 \]
 
+\begin{comment}
 Далее приведен сравнительный график спрогнозированных откликов.
 
-\begin{comment}
 \begin{pycode}
 from pylab import *
 
@@ -980,6 +976,7 @@ rtolyp = "%.3f" % (rtoly * 100)
 \end{pycode}
 
 Относительная погрешность оценивания в пространстве откликов
+
 \[
 	\frac{||y^{*} -\ \hat{y}||}{|| y^{*} ||} = \pyc{print(rtoly)}
 \]
@@ -998,8 +995,7 @@ rtolyp = "%.3f" % (rtoly * 100)
 
 \begin{hyphenrules}{nohyphenation} 
 
-% биб обзор работ по авто дифф.
-% папку с пдф
+% FIXME: fix to conform with GOST
 
 \begin{sloppypar}
 

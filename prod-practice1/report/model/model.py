@@ -111,7 +111,6 @@ class Model(object):
 
             # TODO: refactor
 
-            # FIXME: gradient of py_func is None
             # TODO: embed function itself in the graph, must rebuild the graph
             # if the structure of the model change
             # use tf.convert_to_tensor
@@ -507,6 +506,6 @@ class Model(object):
         # TODO: manually serialize every needed thing
         pass
 
-    def load(filename):
-        # TODO: manually deserialize every needed thing
-        pass
+
+def load(filename):
+    pass

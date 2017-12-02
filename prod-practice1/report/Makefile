@@ -1,4 +1,6 @@
 
+.PHONY: main.pdf
+
 main.pdf: main.tex
 	latexmk -pdf $<
 
