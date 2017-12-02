@@ -20,300 +20,202 @@
 
 \usepackage{comment}
 
-\usetheme{Warsaw}
-\usecolortheme{seahorse}
+\usetheme{Madrid}
+\usecolortheme{beaver}
 
-\title[<<Цепочка обязанностей>>. Функциональный дизайн.]
-{Шаблон <<Цепочка обязанностей>>. Шаблон~функционального дизайна.}
+\title[Идентификация и автодифф.]{
+	Применение автоматического дифференцирования при параметрической идентификации
+	стохастических непрерывно-дискретных моделей
+}
  
 %\subtitle{A short story}
  
-\author[Константин, Горбунов, ПММ-61]{Константин~Горбунов, ПММ-61}
+\institute[НГТУ, ФПМИ, ТПИ]{
+	Новосибирский государственный технический университет (НГТУ) \\
+	Факультет прикладной математики и информатики (ФПМИ) \\
+	Кафедра теоретической и прикладной информатики (ТПИ)
+}
+
+\author[Горбунов К.]{
+	Горбунов Константин, \tiny{магистрант, гр. ПММ-61} \\ 
+	e-mail: gorbunov.2011@stud.nstu.ru \\
+	\normalsize{Руководитель: Черникова Оксана Сергеевна, \tiny{доцент кафедры ТПИ}}
+}
  
-\date[ТООП 2017]
-{Технологии объектно-ориентированного программирования, Осень~2017}
+\date[НТИ-2017]{
+	XI Всероссийская научная конференция молодых ученых \\ 
+	<<Наука. Технологии. Инновации>> \\
+	4 декабря -- 8 декабря~2017~года
+}
+
+% automatic slides / frames naming (titles, subtitles)
+\begin{comment}
+\addtobeamertemplate{frametitle}{
+	\let\insertframetitle\insertsectionhead}{}
+\addtobeamertemplate{frametitle}{
+	\let\insertframesubtitle\insertsubsectionhead}{}
+
+\makeatletter
+	\CheckCommand*\beamer@checkframetitle{\@ifnextchar\bgroup\beamer@inlineframetitle{}}
+	\renewcommand*\beamer@checkframetitle{
+		\global\let\beamer@frametitle\relax\@ifnextchar\bgroup\beamer@inlineframetitle{}}
+\makeatother
+\end{comment}
 
 \begin{document}
 
+
 \frame{\titlepage}
 
-\section{Цепочка обязанностей}
-\subsection{Описание}
-\begin{frame}
-	Цепочка обязанностей (англ. Chain of resposibility) --- поведенческий
-	объектный шаблон, предназначенный для организации в системе
-	уровней ответственности.
-	\medbreak \pause
-	Поведенческие шаблоны
+
+\section*{Содержание}
+
+\begin{frame}{\secname}{\subsecname}
+	\tableofcontents[pausesections,pausesubsections]
+\end{frame}
+
+
+\section{Введение}
+
+\subsection{Об идентификации}
+
+\begin{frame}{\secname}{\subsecname}
+	Сферы:
 	\begin{itemize}
-		\item описывают (не только) шаблоны классов и объектов
-		\item (но и) описывают шаблоны взаимодействия между объектами
+	  \item наука, техника
+	  \item экономика, финансы
 	\end{itemize}
-	\medbreak \pause
-	
-	Шаблон <<цепочка обязанностей>> позволяет:
+	\medskip
+	Смежные задачи:
 	\begin{itemize}
-		\item посылать запросы / заявки / сообщения объектам неявно по цепочке
-		объектов-кандидатам (получателям, обработчикам) на обработку запроса.
-		\pause
-		При этом:
-		\begin{itemize}
-			\item число объектов-кандидатов практически неограничено, \pause
-			\item объекты-кандидаты можно добавлять в цепочку во время
-			исполнения.
-		\end{itemize}
-	\end{itemize} \pause
-	Цель шаблона: избежать <<зацепления>> отправителя запроса с получателем.
-	Каждый получатель <<знает>> только одного (следующего по цепочке)
-	получателя.
-\end{frame}
-
-\subsection{Когда использовать}
-\begin{frame}
-	Использовать когда: \pause \\
-	\begin{itemize}
-		\item несколько объектов могут выполнить запрос, и
-		заранее неизвестно, какой объект будет выполнять запрос, это
-		должно будет определиться автоматически \pause
-		\item хотите послать запрос без явного указания исполнителя \pause
-		\item множество объектов-исполнителей должно формироваться динамически
+	  \item планирование идентификационного эксперимента
+	  \item оценивание состояния (фильтрация)
+	  \item прогнозирование
+	  %\item синтез (проектирование) % ?
+	  \item управление
 	\end{itemize}
+	\medskip
+	Предполагается считать тему работы актуальной.
 \end{frame}
 
-\subsection{Результаты применения}
-\begin{frame}
-	Результаты применения: \pause
+
+\begin{frame}{\secname}{\subsecname}
+  Идентификация
+  \begin{itemize}
+	\item в широком смысле: \\
+	  Структура модели неизвестна.
+	\medskip
+	\item в узком смысле: \\
+	  Структура модели известна с точностью до некоторых неизвестных
+	  параметров.
+  \end{itemize}
+  \medskip
+\end{frame}
+
+
+\section{Автоматическое дифференцирование (АД)}
+
+\subsection{Предпосылки создания и применения метода АД}
+
+\begin{frame}{\secname}{\subsecname}
+  Рассмотрим задачу идентификации в широком смысле. \\
+
+  Алгоритм идентификации: 
+  \begin{enumerate}
+	\item выбор структуры модели
+	\item оценивание параметров
 	\begin{itemize}
-		\item уменьшение <<зацепления>> \\ \pause
-			Шаблон избавляет объект (отправителя запроса) от информации о том,
-		какой другой конкретный объект обработает запрос. \pause
-		\begin{itemize}
-			\item упрощение взаимосвязей между объектами, вместо того чтобы
-			каждому объекту хранить ссылки / указатели на каждого
-			потенциального получателя, сохраняется ссылка только на следующий в
-			цепочке объект \pause
-		\end{itemize}
-		\item гибкость назначения обязанностей объектам \pause
-		\item \emph{\color{red}но нет гарантии, что запрос будет хоть кем-то
-			обработан}\pause, потому как получатель заранее неизвестен
+	  \item выбор критерия идентификации (ММП, МНК или др.)
+	  \item выбор алгоритма оценивания отклика (и состояния) \\(фильтр Калмана
+		или его модификация)
+	  \item программирование вычисления критерия
+	  \item программирование вычисления градиента критерия
 	\end{itemize}
+	\item проверка модели на адекватность: если адекватна, закончим процесс,
+	  иначе вернуться к выбору структуры модели
+  \end{enumerate}
+  
 \end{frame}
 
-\subsection{Пример}
+\begin{frame}{\secname}{\subsecname}
+  Рассмотрим этап программирования вычисления градиента критерия.
+  \begin{enumerate}
+	\item вывод аналитического выражения градиента критерия (либо применить
+	  конечно-разностный численный метод и закончить процесс)
+	\item (непосредственно) программирование вычислений
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{\secname}{\subsecname}
+  Варианты:
+  \begin{itemize}
+	\item каждый раз выводить аналитически новый градиент, переписывать
+	процедуру вычисления градиента критерия
+  \item хранить процедуры вычисления градиентов <<на все случаи жизни>>
+  \end{itemize}
+  DRY --- Don't Repeat Yourself. \\
+  Ответ: автоматическое дифференцирование
+\end{frame}
+
+\begin{frame}{\secname}{\subsecname}
+  Justin Domke
+\end{frame}
+
+
+\subsection{Описание, определение}
+
+\begin{frame}{\secname}{\subsecname}
+  Автоматическое дифференцирование
+  \begin{itemize}
+	\item основано на представлении функции как суперпозиции элементарных
+	  функций и арифметических операций, каждая из которых дифференцируема и
+	  производная известна
+	\item основано на правиле дифференцирования сложной функции (<<правиле
+	  цепи>> --- <<chain-rule>>)
+  \end{itemize}
+\end{frame}
+
+
+\subsection{Иллюстрация}
+
+\begin{frame}{\secname}{\subsecname}
+  Text
+\end{frame}
+
+
+\subsection{Доступные программные инструменты}
+
+\begin{frame}{\secname}{\subsecname}
+  Text
+\end{frame}
+
+
+\section{Постановка задачи}
+
+\begin{frame}{\secname}
+  Text
+\end{frame}
+
+
+\subsection{Описание модельной структуры}
+
+\begin{frame}{\secname}{\subsecname}
+  Text
+\end{frame}
+
+
+\subsection{Критерий идентификации}
+
+\section{Результаты исследований}
+
+\section{Дальнейшие планы исследований}
+
 \begin{frame}
-	Пример: \pause \\
-	Для привлечения внимания... \pause
-
-	Знакомьтесь. \pause
-	\begin{figure}[!htb]
-	\minipage{0.32\textwidth}
-	\includegraphics[width=\linewidth]{riggs}
-	\caption{Сержант Мартин Риггс, (<<Смертельное оружие>>, 1987)}
-	\endminipage\hfill
-	\pause
-	\minipage{0.32\textwidth}
-	\includegraphics[width=\linewidth]{hannah}
-	\caption{Лейтенант Винсент Ханна, (<<Схватка>>, 1995)}
-	\endminipage\hfill
-	\pause
-	\minipage{0.32\textwidth}%
-	\includegraphics[width=\linewidth]{mcclain}
-	\caption{Детектив Джон Макклейн, (<<Крепкий орешек>>)}
-	\endminipage
-	\end{figure}
-	\pause
-	Эти крутые полицейские будут расследовать преступления разной степени
-	сложности.
-\end{frame}
-
-\begin{frame}[fragile]
-\begin{minted}{cpp}
-#include <iostream>
-
-/**
- * Вспомогательный класс, описывающий некоторое преступление
- */
-class CriminalAction {
-
-	friend class Policeman;     // Полицейские имеют доступ к материалам следствия
-
-	int complexity;             // Сложность дела
-
-	const char* description;    // Краткое описание преступления
-
-	public:
-	CriminalAction(int complexity, const char* description):
-		complexity(complexity), description(description) {}
-
-};
-\end{minted}
-\end{frame}
-
-\begin{frame}[fragile]
-\begin{minted}{cpp}
-/**
- * Абстрактный полицейский, который может заниматься расследованием
- преступлений
- */
-class Policeman {
-	protected:
-		// дедукция (умение распутывать сложные дела) у данного полицейского
-		int deduction;      
-
-		// более умелый полицейский, который получит дело, если для текущего оно слишком сложное
-		Policeman* next;    
-
-		virtual void investigateConcrete(const char* description)
-		{}    // собственно расследование
-
-	public:
-		Policeman(int deduction): deduction(deduction) {}
-
-		virtual ~Policeman() {
-			if (next) {
-				delete next;
-			}
-		}
-
-		/**
-		 * Добавляет в цепочку ответственности более опытного полицейского,
-		 * который сможет принять на себя расследование, если текущий не справится
-		 */
-		Policeman* setNext(Policeman* policeman) {
-			next = policeman;
-			return next;
-		}
-\end{minted}
-\end{frame}
-
-\begin{frame}[fragile]
-\begin{minted}{cpp}
-	/**
-	 * Полицейский начинает расследование или, если дело слишком сложное,
-	 * передает его более опытному коллеге
-	 */
-	void investigate(CriminalAction* criminalAction) {
-		if (deduction < criminalAction->complexity) {
-			if (next) {
-				next->investigate(criminalAction);
-			} else {
-				std::cout << "Это дело не раскрыть никому." << std::endl;
-			}
-		} else {
-			investigateConcrete(criminalAction->description);
-		}
-	}
-};
-\end{minted}
-\pause
-\begin{minted}{cpp}
-class MartinRiggs: public Policeman {
-
-	protected:
-
-		void investigateConcrete(const char* description) {
-			std::cout << "Расследование по делу \"" << description
-				<< "\" ведет сержант Мартин Риггс" << std::endl;
-		}
-
-	public:
-
-		MartinRiggs(int deduction): Policeman(deduction) {}
-};
-\end{minted}
-\end{frame}
-
-\begin{frame}[fragile]
-\begin{minted}{cpp}
-class JohnMcClane: public Policeman {
-
-	protected:
-
-		void investigateConcrete(const char* description) {
-			std::cout << "Расследование по делу \"" << description
-				<< "\" ведет детектив Джон Макклейн" << std::endl;
-		}
-
-	public:
-		JohnMcClane(int deduction): Policeman(deduction) {}
-};
-\end{minted}
-\pause
-\begin{minted}{cpp}
-class VincentHanna: public Policeman {
-
-	protected:
-
-		void investigateConcrete(const char* description) {
-			std::cout << "Расследование по делу \"" << description
-				<< "\" ведет лейтенант Винсент Ханна" << std::endl;
-		}
-
-	public:
-		VincentHanna(int deduction): Policeman(deduction) {}
-};
-\end{minted}
-\end{frame}
-
-\begin{frame}[fragile]
-\begin{minted}{cpp}
-int main() {
-	std::cout << "OUTPUT:" << std::endl;
-
-	// полицейский с наименьшим навыком ведения расследований
-	Policeman* policeman = new MartinRiggs(3);  
-
-	policeman
-		->setNext(new JohnMcClane(5))
-		->setNext(new VincentHanna(8));     // добавляем ему двух опытных коллег
-	policeman->investigate(new CriminalAction(2, "Торговля наркотиками из Вьетнама"));
-	policeman->investigate(new CriminalAction(7, "Дерзкое ограбление банка в центре Лос-Анджелеса"));
-	policeman->investigate(new CriminalAction(5, "Серия взрывов в центре Нью-Йорка"));
-	return 0;
-}
-
-/**
- * OUTPUT:
- * Расследование по делу "Торговля наркотиками из Вьетнама" ведет сержант Мартин Риггс
- * Расследование по делу "Дерзкое ограбление банка в центре Лос-Анджелеса" ведет лейтенант Винсент Ханна
- * Расследование по делу "Серия взрывов в центре Нью-Йорка" ведет детектив Джон Макклейн
- */
-\end{minted}
-\end{frame}
-
-\section{Шаблон функционального дизайна}
-\subsection{Описание}
-\begin{frame}[fragile]
-Шаблон функционального дизайна \\
-\medskip
-
-Описание \pause
-\begin{itemize}
-	\item каждый модуль имеет одну обязанность \pause
-	\item и при её исполнении дает минимум побочных эффектов на другие части
-	программы \pause
-	\item основной шаблон \pause
-	\item идеализированный шаблон \pause
-	\item не описан в книге GoF Design Patterns \pause
-	\item уменьшение <<зацепления>> между частями \pause
-	\item особенно актуален для проектирования систем 3D-моделирования
-\end{itemize}
-
-\end{frame}
-\subsection{Преимущества}
-\begin{frame}[fragile]
-Преимущества
-\begin{itemize}
-	\item функционально спроектированную систему легче поддерживать \pause
-	\item большее время жизни функционально спроектированной системы \pause
-	\item повторное использование кода (DRY --- Don't Repeat Yourself)
-\end{itemize}
-\end{frame}
-
-\begin{frame}[fragile]
 \begin{center}
-	Спасибо за внимание.
+  \LARGE{Спасибо за внимание.}
 \end{center}
 \end{frame}
+
+\frame{\titlepage}
 
 \end{document}
