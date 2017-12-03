@@ -20,6 +20,9 @@
 
 \usepackage{comment}
 
+\usepackage[export]{adjustbox}
+\usepackage{tikz}
+
 \usetheme{Madrid}
 \usecolortheme{beaver}
 
@@ -48,20 +51,6 @@
 	4 декабря -- 8 декабря~2017~года
 }
 
-% automatic slides / frames naming (titles, subtitles)
-\begin{comment}
-\addtobeamertemplate{frametitle}{
-	\let\insertframetitle\insertsectionhead}{}
-\addtobeamertemplate{frametitle}{
-	\let\insertframesubtitle\insertsubsectionhead}{}
-
-\makeatletter
-	\CheckCommand*\beamer@checkframetitle{\@ifnextchar\bgroup\beamer@inlineframetitle{}}
-	\renewcommand*\beamer@checkframetitle{
-		\global\let\beamer@frametitle\relax\@ifnextchar\bgroup\beamer@inlineframetitle{}}
-\makeatother
-\end{comment}
-
 \begin{document}
 
 
@@ -80,19 +69,19 @@
 \subsection{Об идентификации}
 
 \begin{frame}{\secname}{\subsecname}
-	Сферы:
+	Сферы: \pause
 	\begin{itemize}
-	  \item наука, техника
-	  \item экономика, финансы
+	  \item наука, техника \pause
+	  \item экономика, финансы \pause
 	\end{itemize}
 	\medskip
-	Смежные задачи:
+	Смежные задачи: \pause
 	\begin{itemize}
-	  \item планирование идентификационного эксперимента
-	  \item оценивание состояния (фильтрация)
-	  \item прогнозирование
+	  \item планирование идентификационного эксперимента \pause
+	  \item оценивание состояния (фильтрация) \pause
+	  \item прогнозирование \pause
 	  %\item синтез (проектирование) % ?
-	  \item управление
+	  \item управление \pause
 	\end{itemize}
 	\medskip
 	Предполагается считать тему работы актуальной.
@@ -100,16 +89,15 @@
 
 
 \begin{frame}{\secname}{\subsecname}
-  Идентификация
+  Идентификация \pause
   \begin{itemize}
-	\item в широком смысле: \\
-	  Структура модели неизвестна.
+	\item в широком смысле: \\ \pause
+	  Структура модели неизвестна. \pause
 	\medskip
-	\item в узком смысле: \\
+	\item в узком смысле: \\ \pause
 	  Структура модели известна с точностью до некоторых неизвестных
 	  параметров.
   \end{itemize}
-  \medskip
 \end{frame}
 
 
@@ -118,18 +106,18 @@
 \subsection{Предпосылки создания и применения метода АД}
 
 \begin{frame}{\secname}{\subsecname}
-  Рассмотрим задачу идентификации в широком смысле. \\
+  Рассмотрим задачу идентификации в широком смысле. \\ \pause
 
-  Алгоритм идентификации: 
+  Алгоритм идентификации: \pause
   \begin{enumerate}
-	\item выбор структуры модели
-	\item оценивание параметров
+	\item выбор структуры модели \pause
+	\item оценивание параметров \pause
 	\begin{itemize}
-	  \item выбор критерия идентификации (ММП, МНК или др.)
-	  \item выбор алгоритма оценивания отклика (и состояния) \\(фильтр Калмана
-		или его модификация)
-	  \item программирование вычисления критерия
-	  \item программирование вычисления градиента критерия
+	  \item выбор критерия идентификации (ММП, МНК или др.) \pause
+	  \item выбор алгоритма оценивания отклика (и состояния) \pause\\(фильтр Калмана
+		или его модификация) \pause
+	  \item программирование вычисления критерия \pause
+	  \item программирование вычисления градиента критерия \pause
 	\end{itemize}
 	\item проверка модели на адекватность: если адекватна, закончим процесс,
 	  иначе вернуться к выбору структуры модели
@@ -138,40 +126,55 @@
 \end{frame}
 
 \begin{frame}{\secname}{\subsecname}
-  Рассмотрим этап программирования вычисления градиента критерия.
+  Рассмотрим этап программирования вычисления градиента критерия. \pause
   \begin{enumerate}
-	\item вывод аналитического выражения градиента критерия (либо применить
-	  конечно-разностный численный метод и закончить процесс)
+	\item вывод аналитического выражения градиента критерия \pause (либо применить
+	  конечно-разностный численный метод и закончить процесс) \pause
 	\item (непосредственно) программирование вычислений
   \end{enumerate}
 \end{frame}
 
 \begin{frame}{\secname}{\subsecname}
-  Варианты:
+  Варианты: \pause
   \begin{itemize}
-	\item каждый раз выводить аналитически новый градиент, переписывать
-	процедуру вычисления градиента критерия
-  \item хранить процедуры вычисления градиентов <<на все случаи жизни>>
+	\item каждый раз выводить аналитически новый градиент, \pause переписывать
+	процедуру вычисления градиента критерия \pause
+  \item хранить процедуры вычисления градиентов <<на все случаи жизни>> \pause
   \end{itemize}
-  DRY --- Don't Repeat Yourself. \\
+  DRY --- Don't Repeat Yourself. \\ \pause
   Ответ: автоматическое дифференцирование
 \end{frame}
 
 \begin{frame}{\secname}{\subsecname}
-  Justin Domke
+  \begin{figure}
+	\includegraphics[width=0.2\textwidth,left]{domke-headshot}
+	\caption{
+	  Justin Domke \\
+	  Assistant Professor \\
+	  College of Computing and Information Sciences \\
+	  University of Massachusetts, Amherst
+	}
+  \end{figure} \pause
+	В 2009 году написал в своём блоге статью с названием \pause <<Automatic
+	Differentiation: The most criminally underused tool in the potential machine
+	learning toolbox?>>
+  --- <<Автоматическое дифференцирование: наиболее пренебрегаемый
+  инструмент в потенциальном арсенале исследователя \ldots>>.
 \end{frame}
 
 
 \subsection{Описание, определение}
 
 \begin{frame}{\secname}{\subsecname}
-  Автоматическое дифференцирование
+  Автоматическое дифференцирование \pause
   \begin{itemize}
 	\item основано на представлении функции как суперпозиции элементарных
 	  функций и арифметических операций, каждая из которых дифференцируема и
-	  производная известна
+	  производная известна \pause
 	\item основано на правиле дифференцирования сложной функции (<<правиле
-	  цепи>> --- <<chain-rule>>)
+	  цепи>> --- <<chain-rule>>) \pause
+	\item особенно актуально для обучения нейронных сетей (особенно глубинных, с
+		десятками-сотнями тысяч, миллионами параметров)
   \end{itemize}
 \end{frame}
 
@@ -179,14 +182,32 @@
 \subsection{Иллюстрация}
 
 \begin{frame}{\secname}{\subsecname}
-  Text
+	\[
+		f(x) = a_0 + a_1 \sin (\omega t)
+	\]
+	\begin{tikzpicture}
+		\path (0,0) node(t) {$t$} 
+		(2,-1) node[circle,draw](wt) {$\cdot$};
+		\draw[->,thick] (t) -- (wt);
+		\path (0,-2) node(w) {$\omega$};
+		\draw[->,thick] (w) -- (wt);
+		\draw[->,thick] (wt) -- node[above] {$\omega t$} ++(1.5,0);
+
+		\path (0,-0.5) node(dt) {$t'$};
+		\path (0,-2.5) node(dw) {$\omega'$};
+		%\filldraw[black] (0,0) circle (2pt) node[anchor=west] {Intersection point};
+		\onslide<1->
+	\end{tikzpicture}
 \end{frame}
 
 
 \subsection{Доступные программные инструменты}
 
 \begin{frame}{\secname}{\subsecname}
-  Text
+	\begin{itemize}
+		\item Python: autograd 
+		\item Python: TensorFlow
+	\end{itemize}
 \end{frame}
 
 
