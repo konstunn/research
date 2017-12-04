@@ -21,7 +21,11 @@
 \usepackage{comment}
 
 \usepackage[export]{adjustbox}
+
+\usepackage{dblfloatfix}
+
 \usepackage{tikz}
+\usetikzlibrary{graphs,arrows,positioning}
 
 \usetheme{Madrid}
 \usecolortheme{beaver}
@@ -182,33 +186,41 @@
 \subsection{Иллюстрация}
 
 \begin{frame}{\secname}{\subsecname}
-	\[
-		f(x) = a_0 + a_1 \sin (\omega t)
-	\]
+	\begin{minipage}{.5\textwidth}
+	\begin{figure}[H]
 	\begin{tikzpicture}[
+			remember picture,overlay,
+			>=stealth',
+			node distance=5mm and 5mm,
 			op/.style={
+				draw,
 				rectangle,
 				minimum size=6mm,
 				rounded corners=3mm
 			}
 		]
-		\path (0,0) node(t) {$t$} (2,-1) node[op,draw](wt) {$\cdot$};
-		\draw[->,thick] (t) -- (wt);
-		\path (0,-2) node(w) {$\omega$};
-		\draw[->,thick] (w) -- (wt);
-		\path (wt) ++(1.5,0) node[op,draw](sin) {$\sin$};
-		\draw[->,thick] (wt) -- node[above](wtl) {$\omega t$} (sin);
-		\path (sin) ++(2,0) node[op,draw](plus) {$+$};
-		\draw[->,thick] (sin) -- node[above](sinwtl) {$\sin(\omega t)$} (plus);
-		\path (3.5,-2.5) node(a1) {$a_1$};
-		\draw[->,thick] (a1) -- (plus);
-		\path (3.5,0.5) node[op,draw](cos) {$\cos$};
+		\tikz[overlay,remember picture]
+		\graph[branch down=7mm] {
+			{
+				t/{$t$}, 
+				w/{$\omega$}
+			} -> 
+			tw/{$\cdot$} [op] -> "$\sin$" [op]
+				-> a1sin/{$\cdot$} [op] -> plus/{$+$} [op];
+			a1/{$a_1$} -> a1sin;
+			a0/{$a_0$} -> plus -> "$a_0 + a_1 \sin(\omega t)$" 
+				[above=5 mm of plus];
 
-		\path (0,-0.5) node(dt) {$t'$};
-		\path (0,-2.5) node(dw) {$\omega'$};
-		%\filldraw[black] (0,0) circle (2pt) node[anchor=west] {Intersection point};
-		\onslide<1->
+			dt/{$t'$} -> dtw/{$\cdot$} [op];
+			w ->[dashed] dtw;
+			dw/{$\omega'$} -> tdw/{$\cdot$} [op]; 
+			t ->[dashed] tdw;
+			dt -> dwt/+[op];
+			dw -> dwt;
+		};
 	\end{tikzpicture}
+	\end{figure}
+	\end{minipage}
 \end{frame}
 
 
