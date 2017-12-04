@@ -13,8 +13,8 @@
 \usepackage{verbatim}
 
 \usepackage[T2A]{fontenc}
-\usepackage[utf8x]{inputenc}
-\usepackage[russian]{babel}
+\usepackage[lutf8x]{luainputenc}
+\usepackage[russian,english]{babel}
 
 \usepackage{color}
 
@@ -25,7 +25,8 @@
 \usepackage{dblfloatfix}
 
 \usepackage{tikz}
-\usetikzlibrary{graphs,arrows,positioning}
+\usetikzlibrary{graphs,arrows,positioning,graphdrawing}
+\usegdlibrary{trees,force,layered}
 
 \usetheme{Madrid}
 \usecolortheme{beaver}
@@ -189,9 +190,10 @@
 	\begin{minipage}{.5\textwidth}
 	\begin{figure}[H]
 	\begin{tikzpicture}[
+			anchor=west,
 			remember picture,overlay,
 			>=stealth',
-			node distance=5mm and 5mm,
+			node distance=10mm and 10mm,
 			op/.style={
 				draw,
 				rectangle,
@@ -200,23 +202,25 @@
 			}
 		]
 		\tikz[overlay,remember picture]
-		\graph[branch down=7mm] {
+		\graph[layered layout,grow'=right,branch down=7mm] {
 			{
 				t/{$t$}, 
 				w/{$\omega$}
 			} -> 
-			tw/{$\cdot$} [op] -> "$\sin$" [op]
-				-> a1sin/{$\cdot$} [op] -> plus/{$+$} [op];
+			wt/{$\cdot$} [op] -> sin/{$\sin$} [op] -> a1sin/{$\cdot$} [op]
+				-> plus/{$+$} [op];
 			a1/{$a_1$} -> a1sin;
-			a0/{$a_0$} -> plus -> "$a_0 + a_1 \sin(\omega t)$" 
-				[above=5 mm of plus];
+			a0/{$a_0$} -> plus -> "$a_0 + a_1 \sin(\omega t)$";
 
-			dt/{$t'$} -> dtw/{$\cdot$} [op];
-			w ->[dashed] dtw;
-			dw/{$\omega'$} -> tdw/{$\cdot$} [op]; 
+			dt/{$t'$} ->[dashed] wdt/{$\cdot$} [op];
+			w ->[dashed] wdt;
+			dw/{$\omega'$} ->[dashed] tdw/{$\cdot$} [op]; 
 			t ->[dashed] tdw;
-			dt -> dwt/+[op];
-			dw -> dwt;
+			tdw ->[dashed] dwt/+[op,right=5mm of tdw];
+			wdt ->[dashed] dwt;
+			wt ->[dashed] cos/{$\cos$} [op];
+			cos -> dcos/{$\cdot$}[op];
+			dwt -> dcos;
 		};
 	\end{tikzpicture}
 	\end{figure}
