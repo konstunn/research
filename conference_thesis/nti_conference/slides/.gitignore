@@ -1,0 +1,6 @@
+.exrc
+*.nav
+*.out
+*.snm
+*.vrb
+_minted-main/
