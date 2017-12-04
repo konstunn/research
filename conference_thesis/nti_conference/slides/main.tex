@@ -8,7 +8,7 @@
 \usepackage{cmap}
 
 \usepackage{minted}
-\setminted{fontsize=\tiny,baselinestretch=1}
+\setminted{baselinestretch=1}
 
 \usepackage{verbatim}
 
@@ -147,7 +147,7 @@
   \item хранить процедуры вычисления градиентов <<на все случаи жизни>> \pause
   \end{itemize}
   DRY --- Don't Repeat Yourself. \\ \pause
-  Ответ: автоматическое дифференцирование
+  Альтернатива: автоматическое дифференцирование
 \end{frame}
 
 \begin{frame}{\secname}{\subsecname}
@@ -219,11 +219,13 @@
 			tdw ->[dashed] dwt/+[op,right=5mm of tdw];
 			wdt ->[dashed] dwt;
 			wt ->[dashed] cos/{$\cos$} [op];
-			cos ->[dashed] dcos/{$\cdot$}[op];
-			dwt ->[dashed] dcos;
+			cos ->[dashed] dsin/{$\cdot$}[op];
+			dwt ->[dashed] dsin;
 			sin ->[dashed] sinda1/{$\cdot$}[op];
 			da1/{$a_1'$} ->[dashed] sinda1 -> da1sin/+[op];
-			dcos ->[dashed] da1sin;
+			dsin ->[dashed] a1dsin/{$\cdot$}[op];
+			a1 ->[dashed] a1dsin;
+			a1dsin -> da1sin;
 			da0/{$a_0'$} ->[dashed] da0a1sin/+[op];
 			da1sin ->[dashed] da0a1sin ->[dashed] "$(a_0 + a_1 \sin(\omega t))'$";
 		};
@@ -235,10 +237,22 @@
 
 \subsection{Доступные программные инструменты}
 
-\begin{frame}{\secname}{\subsecname}
+\begin{frame}[fragile]{\secname}{\subsecname}
 	\begin{itemize}
 		\item Python: autograd 
-			% code
+		\medskip
+		\begin{minted}{python}
+		import autograd.numpy as np
+		from autograd import grad
+
+		def f(x):
+		    # your numpy function
+		    pass
+
+		grad_f = grad(f)
+		# call grad_f()
+		\end{minted}
+		\medskip
 		\item Python: TensorFlow
 	\end{itemize}
 \end{frame}
@@ -246,23 +260,61 @@
 
 \section{Постановка задачи}
 
-\begin{frame}{\secname}
-  Text
-\end{frame}
-
-
 \subsection{Описание модельной структуры}
 
 \begin{frame}{\secname}{\subsecname}
-  Text
-\end{frame}
+Рассмотрим модель стохастической динамической линейной непрерывно-дискретной
+системы в простанстве состояний в общем виде:
+\begin{equation}
+	\label{eq:initmod}
+	\left\{ 
+		\begin{array}{lll}
+			\frac{d}{dt}\vec{x}(t) &= F \vec{x}(t) + C \vec{u}(t) + G \vec{w}(t),
+				& t \in [t_0,T] \\ 
+			\vec{y}(t_k)           &= H \vec{x}(t_k) + \vec{v}(t_k), 
+				& k = 1,\ldots, N
+		\end{array} 
+	\right. 
+\end{equation}
 
+\end{frame}
 
 \subsection{Критерий идентификации}
 
+\newcommand{\eps}{\varepsilon}
+
+\begin{frame}{\secname}{\subsecname}
+Критерий идентификации --- критерий максимального правдоподобия.
+\begin{equation}
+\begin{split}
+\chi(\theta) = -\ln{L(Y_1^N;\theta)} = \frac{Nm}{2} \ln{2\pi} +
+\\ + \frac{1}{2} \sum\limits_{k=1}^{N} 
+\left[ \eps^T(t_k, \theta) B^{-1}(t_k, \theta) \eps(t_k, \theta) + 
+\ln \det B(t_k, \theta) \right].
+\end{split}
+\end{equation}
+\end{frame}
+
+
 \section{Результаты исследований}
 
+\begin{frame}
+	Для различных случаев вхождения параметров в компоненты модели в
+	результате проведения процедуры идентификации с использованием АД были
+	получены оценки параметров по точности сопоставимые с результатами,
+	полученными с использованием аналитического выражения градиента критерия.
+\end{frame}
+
 \section{Дальнейшие планы исследований}
+
+\begin{frame}{\secname}
+	Применить АД к модели, уравнение эволюции которой задано неявно, то есть и
+	имеет вид: 
+	\[
+		f(\dot{x},x,w,u,t,\theta)=0,
+	\]
+	откуда невозможно явно выразить $\dot{x}$.
+\end{frame}
 
 \begin{frame}
 \begin{center}
