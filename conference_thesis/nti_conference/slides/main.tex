@@ -187,10 +187,10 @@
 \subsection{Иллюстрация}
 
 \begin{frame}{\secname}{\subsecname}
-	\begin{minipage}{.5\textwidth}
 	\begin{figure}[H]
+	\raggedright
+	\begin{minipage}{.5\textwidth}
 	\begin{tikzpicture}[
-			anchor=west,
 			remember picture,overlay,
 			>=stealth',
 			node distance=10mm and 10mm,
@@ -206,9 +206,9 @@
 			{
 				t/{$t$}, 
 				w/{$\omega$}
-			} -> 
-			wt/{$\cdot$} [op] -> sin/{$\sin$} [op] -> a1sin/{$\cdot$} [op]
-				-> plus/{$+$} [op];
+			} ->
+			wt/{$\cdot$} [op] -> sin/{$\sin$} [op]
+				-> a1sin/{$\cdot$} [op] -> plus/{$+$} [op];
 			a1/{$a_1$} -> a1sin;
 			a0/{$a_0$} -> plus -> "$a_0 + a_1 \sin(\omega t)$";
 
@@ -219,12 +219,17 @@
 			tdw ->[dashed] dwt/+[op,right=5mm of tdw];
 			wdt ->[dashed] dwt;
 			wt ->[dashed] cos/{$\cos$} [op];
-			cos -> dcos/{$\cdot$}[op];
-			dwt -> dcos;
+			cos ->[dashed] dcos/{$\cdot$}[op];
+			dwt ->[dashed] dcos;
+			sin ->[dashed] sinda1/{$\cdot$}[op];
+			da1/{$a_1'$} ->[dashed] sinda1 -> da1sin/+[op];
+			dcos ->[dashed] da1sin;
+			da0/{$a_0'$} ->[dashed] da0a1sin/+[op];
+			da1sin ->[dashed] da0a1sin ->[dashed] "$(a_0 + a_1 \sin(\omega t))'$";
 		};
 	\end{tikzpicture}
-	\end{figure}
 	\end{minipage}
+	\end{figure}
 \end{frame}
 
 
@@ -233,6 +238,7 @@
 \begin{frame}{\secname}{\subsecname}
 	\begin{itemize}
 		\item Python: autograd 
+			% code
 		\item Python: TensorFlow
 	\end{itemize}
 \end{frame}
