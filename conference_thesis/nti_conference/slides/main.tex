@@ -185,13 +185,24 @@
 	\[
 		f(x) = a_0 + a_1 \sin (\omega t)
 	\]
-	\begin{tikzpicture}
-		\path (0,0) node(t) {$t$} 
-		(2,-1) node[circle,draw](wt) {$\cdot$};
+	\begin{tikzpicture}[
+			op/.style={
+				rectangle,
+				minimum size=6mm,
+				rounded corners=3mm
+			}
+		]
+		\path (0,0) node(t) {$t$} (2,-1) node[op,draw](wt) {$\cdot$};
 		\draw[->,thick] (t) -- (wt);
 		\path (0,-2) node(w) {$\omega$};
 		\draw[->,thick] (w) -- (wt);
-		\draw[->,thick] (wt) -- node[above] {$\omega t$} ++(1.5,0);
+		\path (wt) ++(1.5,0) node[op,draw](sin) {$\sin$};
+		\draw[->,thick] (wt) -- node[above](wtl) {$\omega t$} (sin);
+		\path (sin) ++(2,0) node[op,draw](plus) {$+$};
+		\draw[->,thick] (sin) -- node[above](sinwtl) {$\sin(\omega t)$} (plus);
+		\path (3.5,-2.5) node(a1) {$a_1$};
+		\draw[->,thick] (a1) -- (plus);
+		\path (3.5,0.5) node[op,draw](cos) {$\cos$};
 
 		\path (0,-0.5) node(dt) {$t'$};
 		\path (0,-2.5) node(dw) {$\omega'$};
