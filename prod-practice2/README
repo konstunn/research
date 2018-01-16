@@ -1,0 +1,7 @@
+
+оценивание параметров непрерывно-дискретных моделей по критерию максимального
+правдоподобия
+
+Discrete-continuous linear dynamic stohachistic systems estimation based on maximum likelihood.
+
+Logarithmic likelihood function computation as well as its' gradient.

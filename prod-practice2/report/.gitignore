@@ -1,0 +1,9 @@
+*.fdb_latexmk
+*.fls
+*.swp
+.ropeproject
+*.exrc
+*.pyc
+*.out
+main.pytxcode
+pythontex-files-main
