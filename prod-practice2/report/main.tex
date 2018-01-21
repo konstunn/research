@@ -972,21 +972,86 @@ rez = m.sim(u, t)
 y = rez[1]
 \end{pycode}
 
-Относительная погрешность оценивания в пространстве откликов
+% fit model and dump results to file
+\begin{pycode}[model2]
+th0 = [0.8, 1.2]
 
+fit = m.mle_fit(th0, t, u, y)
+
+yhat_true = m.yhat(t, u, y)
+yhat_est = m.yhat(t, u, y, fit.x)
+init_loss = m.lik(t, u, y, th0)
+
+rez = {'th0': th0, 'fit': fit, 'th_true': th, 'yhat_true': yhat_true,
+	'yhat_est': yhat_est, 't': t, 'init_loss': init_loss}
+
+with open('rez.pkl', 'wb') as f:
+	# pytex.add_created('rez2.pkl')
+	pickle.dump(rez, f)
+\end{pycode}
+
+% read fit results
+\begin{pycode}
+pytex.add_dependencies('rez2.pkl')
+
+with open('rez.pkl', 'rb') as f:
+	rez = pickle.load(f)
+
+th0 = np.matrix(rez['th0'])
+th0 = pylatex.Matrix(th0, mtype='b')
+th0 = th0.dumps()
+
+th = rez['fit']['x']
+th = np.matrix(th)
+th = np.around(th, 6)
+th = pylatex.Matrix(th, mtype='b')
+th = th.dumps()
+
+fit = rez['fit']
+
+th_true = rez['th_true']
+th_t = np.matrix(th_true)
+th_t = pylatex.Matrix(th_t, mtype='b')
+th_t = th_t.dumps()
+
+init_loss = rez['init_loss']
+\end{pycode}
+
+\bigskip \noindent
+Истинные значения параметров 
 \[
-	\frac{||y^{*} -\ \hat{y}||}{|| y^{*} ||} = \pyc{print("%.6f" % rtoly)}
+	\theta^{*} = \pyc{print(th_t)}
+\]
+Начальное приближение 
+\[
+	\theta_{0} = \pyc{print(th0)}
+\]
+Начальное значение критерия
+\[
+	\chi(\theta_0) = \pyc{print("%.6f" % init_loss)}
+\]
+Найденные значения параметров
+\[
+	\hat{\theta} = \pyc{print(th)}
+\]
+Значение критерия
+\[
+	\chi(\hat{\theta}) = \pyc{print("%.6f" % fit.fun)}
 \]
 
 \section*{Заключение}
 \addcontentsline{toc}{section}{Заключение}
 
-В результате оценивания относительная погрешность в пространстве параметров
-принимает низкое значение в $\pyc{print(rtol_p)}\%$, относительная погрешность
-оценивания в пространстве откликов составила \pyc{print(rtolyp)}\%. Таким
-образом результаты экспериментальных модельных исследований хорошо согласуются
-с теоретическими положениями о методах оценивания параметров динамических
-стохастических линейных непрерывно-дискретных систем.
+Как было показано, результаты экспериментальных модельных исследований хорошо
+согласуются с теоретическими положениями об эффективности алгоритма оценивания
+параметров динамических стохастических линейных непрерывно-дискретных систем
+методом максимального правдоподобия при выполнении соответствующи указанных
+априорных предположений. 
+
+А использование в оптимизационной процедуре градиента,
+вычисленного методом автоматического дифференцирования, позволяет получить
+оценки, погрешность которых сопоставима с погрешностью оценок, полученных с
+использованием аналитического выражения градиента.
 
 \begin{thebibliography}{9}
 
