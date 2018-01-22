@@ -955,6 +955,91 @@ rtolyp = "%.3f" % (rtoly * 100)
 	\frac{||y^{*} -\ \hat{y}||}{|| y^{*} ||} = \pyc{print("%.6f" % rtoly)}
 \]
 
+\subsection{Пример 2}
+
+Рассмотрим следующую модель.
+
+\[
+	\frac{d}{dt}\vec{x}(t) =
+		\begin{pmatrix}
+			-1 & 0 \\
+			0 & -1
+		\end{pmatrix}
+		\vec{x}(t) 
+		+
+		\begin{pmatrix}
+			\theta_1 & 0 \\
+			0 & \theta_2 
+		\end{pmatrix}
+		\vec{u}(t) 
+		+
+		\begin{pmatrix}
+			1 & 0 \\
+			0 & 1
+		\end{pmatrix}
+		\vec{w}(t),
+\]
+\[
+	\vec{y}(t_k) =
+	\begin{pmatrix}
+		1 & 0 \\
+		0 & 1
+	\end{pmatrix}
+	\vec{x}(t_k) 
+	+ 
+	\vec{v}(t_k),
+\]
+\[
+	\vec{x}(t) = \begin{bmatrix} x_1(t) \\ x_2(t) \end{bmatrix},\ 
+	\vec{u}(t) = \begin{bmatrix} u_1(t) \\ u_2(t) \end{bmatrix},\
+	\vec{w}(t) = \begin{bmatrix} w_1(t) \\ w_2(t) \end{bmatrix},\
+	\vec{y}(t_k) = \begin{bmatrix} y_1(t_k) \\ y_2(t_k) \end{bmatrix},\
+\]
+\[
+	\vec{v}(t_k) = \begin{bmatrix} v_1(t_k) \\ v_2(t_k) \end{bmatrix},\
+\]
+\[
+	R = Q = P_0 = \begin{pmatrix} 0.01 & 0 \\ 0 & 0.01 \end{pmatrix},\
+		\overline{\vec{x}_0} = \begin{pmatrix} 0 \\ 0 \end{pmatrix}
+\]
+
+$\theta = \begin{pmatrix} \theta_1 & \theta_2 \end{pmatrix}$ --- вектор
+	оцениваемых параметров. \\ 
+\indent $\theta^{*} = \begin{pmatrix} 1.0 & 1.0 \end{pmatrix}$ --- истинные
+	значения параметров. \\
+\indent Число параметров $s = 2$.
+
+Входное воздействие --- ступенчатая функция
+\[
+	\vec{u}(t) = \begin{cases} \begin{pmatrix} 10 & 10 \end{pmatrix}^T,\ t > 0 \\
+		\begin{pmatrix} 0 & 0 \end{pmatrix}^T,\ t = 0 \end{cases}
+\]
+
+% define create model
+\begin{pycode}[model2]
+F = lambda th: [[-1, 0.],
+								[0., -1]]
+
+C = lambda th: [[th[0], 0.],
+								[0., th[1]]]
+
+G = lambda th: [[1.0, 0.],
+                [0., 1.0]]
+
+H = lambda th: [[1.0, 0.],
+                [0., 1.0]]
+
+x0_m = lambda th: [[0.],
+                   [0.]]
+
+x0_c = lambda th: [[1e-2, 0.],
+                   [0., 1e-2]]
+w_c = x0_c
+v_c = x0_c
+
+th = [1.0, 1.00]
+
+m = Model(F, C, G, H, x0_m, x0_c, w_c, v_c, th)
 \end{pycode}
 
 % define input
@@ -981,16 +1066,18 @@ init_loss = m.lik(t, u, y, th0)
 rez = {'th0': th0, 'fit': fit, 'th_true': th, 'yhat_true': yhat_true,
 	'yhat_est': yhat_est, 't': t, 'init_loss': init_loss}
 
-with open('rez.pkl', 'wb') as f:
-	# pytex.add_created('rez2.pkl')
+filename = 'rez2.pkl'
+with open(filename, 'wb') as f:
+	# pytex.add_created(filename)
 	pickle.dump(rez, f)
 \end{pycode}
 
 % read fit results
 \begin{pycode}
-pytex.add_dependencies('rez2.pkl')
+filename = 'rez2.pkl'
+pytex.add_dependencies(filename)
 
-with open('rez.pkl', 'rb') as f:
+with open(filename, 'rb') as f:
 	rez = pickle.load(f)
 
 th0 = np.matrix(rez['th0'])
@@ -1034,6 +1121,440 @@ init_loss = rez['init_loss']
 \[
 	\chi(\hat{\theta}) = \pyc{print("%.6f" % fit.fun)}
 \]
+
+Относительная погрешность оценивания в пространстве параметров
+
+% compute fit relative tolerance
+\begin{pycode}
+th = rez['fit']['x']
+th_t = rez['th_true']
+rtol = np.linalg.norm(th_t - th) / np.linalg.norm(th_t)
+rtol_p = "%.3f" % (rtol * 100)
+\end{pycode}
+
+\[
+	\frac{||\theta^* -\ \hat{\theta}||}{||\theta^*||} = 
+		\pyc{print("%.6f" % rtol)}
+\]
+
+% prepare relative tolerance in response space for display
+\begin{pycode}
+yhat_true = rez['yhat_true']
+yhat_est = rez['yhat_est']
+
+rtoly = np.linalg.norm(yhat_true - yhat_est)
+rtolyp = "%.3f" % (rtoly * 100)
+\end{pycode}
+
+Относительная погрешность оценивания в пространстве откликов
+
+\[
+	\frac{||y^{*} -\ \hat{y}||}{|| y^{*} ||} = \pyc{print("%.6f" % rtoly)}
+\]
+
+\subsection{Пример 3}
+
+Рассмотрим следующую модель.
+
+\[
+	\frac{d}{dt}\vec{x}(t) =
+		\begin{pmatrix}
+			-1 & 0 \\
+			0 & -1
+		\end{pmatrix}
+		\vec{x}(t) 
+		+
+		\begin{pmatrix}
+			1 & 0 \\
+			0 & 1 
+		\end{pmatrix}
+		\vec{u}(t) 
+		+
+		\begin{pmatrix}
+			\theta_1 & 0 \\
+			0 & \theta_2
+		\end{pmatrix}
+		\vec{w}(t),
+\]
+\[
+	\vec{y}(t_k) =
+	\begin{pmatrix}
+		1 & 0 \\
+		0 & 1
+	\end{pmatrix}
+	\vec{x}(t_k) 
+	+ 
+	\vec{v}(t_k),
+\]
+\[
+	\vec{x}(t) = \begin{bmatrix} x_1(t) \\ x_2(t) \end{bmatrix},\ 
+	\vec{u}(t) = \begin{bmatrix} u_1(t) \\ u_2(t) \end{bmatrix},\
+	\vec{w}(t) = \begin{bmatrix} w_1(t) \\ w_2(t) \end{bmatrix},\
+	\vec{y}(t_k) = \begin{bmatrix} y_1(t_k) \\ y_2(t_k) \end{bmatrix},\
+\]
+\[
+	\vec{v}(t_k) = \begin{bmatrix} v_1(t_k) \\ v_2(t_k) \end{bmatrix},\
+\]
+\[
+	R = Q = P_0 = \begin{pmatrix} 0.01 & 0 \\ 0 & 0.01 \end{pmatrix},\
+		\overline{\vec{x}_0} = \begin{pmatrix} 0 \\ 0 \end{pmatrix}
+\]
+
+$\theta = \begin{pmatrix} \theta_1 & \theta_2 \end{pmatrix}$ --- вектор
+	оцениваемых параметров. \\ 
+\indent $\theta^{*} = \begin{pmatrix} 1.0 & 1.0 \end{pmatrix}$ --- истинные
+	значения параметров. \\
+\indent Число параметров $s = 2$.
+
+Входное воздействие --- ступенчатая функция
+\[
+	\vec{u}(t) = \begin{cases} \begin{pmatrix} 10 & 10 \end{pmatrix}^T,\ t > 0 \\
+		\begin{pmatrix} 0 & 0 \end{pmatrix}^T,\ t = 0 \end{cases}
+\]
+
+% define create model
+\begin{pycode}[model3]
+F = lambda th: [[-1, 0.],
+                [0., -1]]
+
+C = lambda th: [[1, 0.],
+                [0., 1]]
+
+G = lambda th: [[th[0], 0.],
+                [0., th[1]]]
+
+H = lambda th: [[1.0, 0.],
+                [0., 1.0]]
+
+x0_m = lambda th: [[0.],
+                   [0.]]
+
+x0_c = lambda th: [[1e-2, 0.],
+                   [0., 1e-2]]
+w_c = x0_c
+v_c = x0_c
+
+th = [1.0, 1.00]
+
+m = Model(F, C, G, H, x0_m, x0_c, w_c, v_c, th)
+\end{pycode}
+
+% define input
+\begin{pycode}[model3]
+t = np.linspace(0, 10, 100)
+u = np.ones([2, 100])
+u = u * 10
+
+# run simulation
+rez = m.sim(u, t)
+y = rez[1]
+\end{pycode}
+
+% fit model and dump results to file
+\begin{pycode}[model3]
+th0 = [0.8, 1.2]
+
+fit = m.mle_fit(th0, t, u, y)
+
+yhat_true = m.yhat(t, u, y)
+yhat_est = m.yhat(t, u, y, fit.x)
+init_loss = m.lik(t, u, y, th0)
+
+rez = {'th0': th0, 'fit': fit, 'th_true': th, 'yhat_true': yhat_true,
+	'yhat_est': yhat_est, 't': t, 'init_loss': init_loss}
+
+filename = 'rez3.pkl'
+with open(filename, 'wb') as f:
+	# pytex.add_created(filename)
+	pickle.dump(rez, f)
+\end{pycode}
+
+% read fit results
+\begin{pycode}
+filename = 'rez3.pkl'
+pytex.add_dependencies(filename)
+
+with open(filename, 'rb') as f:
+	rez = pickle.load(f)
+
+th0 = np.matrix(rez['th0'])
+th0 = pylatex.Matrix(th0, mtype='b')
+th0 = th0.dumps()
+
+th = rez['fit']['x']
+th = np.matrix(th)
+th = np.around(th, 6)
+th = pylatex.Matrix(th, mtype='b')
+th = th.dumps()
+
+fit = rez['fit']
+
+th_true = rez['th_true']
+th_t = np.matrix(th_true)
+th_t = pylatex.Matrix(th_t, mtype='b')
+th_t = th_t.dumps()
+
+init_loss = rez['init_loss']
+\end{pycode}
+
+\bigskip \noindent
+Истинные значения параметров 
+\[
+	\theta^{*} = \pyc{print(th_t)}
+\]
+Начальное приближение 
+\[
+	\theta_{0} = \pyc{print(th0)}
+\]
+Начальное значение критерия
+\[
+	\chi(\theta_0) = \pyc{print("%.6f" % init_loss)}
+\]
+Найденные значения параметров
+\[
+	\hat{\theta} = \pyc{print(th)}
+\]
+Значение критерия
+\[
+	\chi(\hat{\theta}) = \pyc{print("%.6f" % fit.fun)}
+\]
+
+Относительная погрешность оценивания в пространстве параметров
+
+% compute fit relative tolerance
+\begin{pycode}
+th = rez['fit']['x']
+th_t = rez['th_true']
+rtol = np.linalg.norm(th_t - th) / np.linalg.norm(th_t)
+rtol_p = "%.3f" % (rtol * 100)
+\end{pycode}
+
+\[
+	\frac{||\theta^* -\ \hat{\theta}||}{||\theta^*||} = 
+		\pyc{print("%.6f" % rtol)}
+\]
+
+% prepare relative tolerance in response space for display
+\begin{pycode}
+yhat_true = rez['yhat_true']
+yhat_est = rez['yhat_est']
+
+rtoly = np.linalg.norm(yhat_true - yhat_est)
+rtolyp = "%.3f" % (rtoly * 100)
+\end{pycode}
+
+Относительная погрешность оценивания в пространстве откликов
+
+\[
+	\frac{||y^{*} -\ \hat{y}||}{|| y^{*} ||} = \pyc{print("%.6f" % rtoly)}
+\]
+
+В данном примере в результатах наблюдается крайне высокий уровень погрешности в
+  силу того, что оцениваются параметры матрицы $G$ --- матрицы влияния
+  возмущений объекта на его состояние. Параметры, входящие в эту матрицу плохо
+  поддаются оценке. Возможная мера, которую можно принять для улучшения оценок,
+  является оценивание с использованием предварительно синтезированных
+  оптимальных входных сигналах, то есть предварительное планирование входных
+  сигналов.
+
+\subsection{Пример 4}
+
+Рассмотрим следующую модель.
+
+\[
+	\frac{d}{dt}\vec{x}(t) =
+		\begin{pmatrix}
+			-1 & 0 \\
+			0 & -1
+		\end{pmatrix}
+		\vec{x}(t) 
+		+
+		\begin{pmatrix}
+			1 & 0 \\
+			0 & 1 
+		\end{pmatrix}
+		\vec{u}(t) 
+		+
+		\begin{pmatrix}
+			1 & 0 \\
+			0 & 1 
+		\end{pmatrix}
+		\vec{w}(t),
+\]
+\[
+	\vec{y}(t_k) =
+	\begin{pmatrix}
+		\theta_1 & 0 \\
+		0 & \theta_2
+	\end{pmatrix}
+	\vec{x}(t_k) 
+	+ 
+	\vec{v}(t_k),
+\]
+\[
+	\vec{x}(t) = \begin{bmatrix} x_1(t) \\ x_2(t) \end{bmatrix},\ 
+	\vec{u}(t) = \begin{bmatrix} u_1(t) \\ u_2(t) \end{bmatrix},\
+	\vec{w}(t) = \begin{bmatrix} w_1(t) \\ w_2(t) \end{bmatrix},\
+	\vec{y}(t_k) = \begin{bmatrix} y_1(t_k) \\ y_2(t_k) \end{bmatrix},\
+\]
+\[
+	\vec{v}(t_k) = \begin{bmatrix} v_1(t_k) \\ v_2(t_k) \end{bmatrix},\
+\]
+\[
+	R = Q = P_0 = \begin{pmatrix} 0.01 & 0 \\ 0 & 0.01 \end{pmatrix},\
+		\overline{\vec{x}_0} = \begin{pmatrix} 0 \\ 0 \end{pmatrix}
+\]
+
+$\theta = \begin{pmatrix} \theta_1 & \theta_2 \end{pmatrix}$ --- вектор
+	оцениваемых параметров. \\ 
+\indent $\theta^{*} = \begin{pmatrix} 1.0 & 1.0 \end{pmatrix}$ --- истинные
+	значения параметров. \\
+\indent Число параметров $s = 2$.
+
+Входное воздействие --- ступенчатая функция
+\[
+	\vec{u}(t) = \begin{cases} \begin{pmatrix} 10 & 10 \end{pmatrix}^T,\ t > 0 \\
+		\begin{pmatrix} 0 & 0 \end{pmatrix}^T,\ t = 0 \end{cases}
+\]
+
+% define create model
+\begin{pycode}[model4]
+F = lambda th: [[-1, 0.],
+                [0., -1]]
+
+C = lambda th: [[1, 0.],
+                [0., 1]]
+
+G = lambda th: [[1, 0.],
+                [0., 1]]
+
+H = lambda th: [[th[0], 0.],
+                [0., th[1]]]
+
+x0_m = lambda th: [[0.],
+                   [0.]]
+
+x0_c = lambda th: [[1e-2, 0.],
+                   [0., 1e-2]]
+w_c = x0_c
+v_c = x0_c
+
+th = [1.0, 1.0]
+
+m = Model(F, C, G, H, x0_m, x0_c, w_c, v_c, th)
+\end{pycode}
+
+% define input
+\begin{pycode}[model4]
+t = np.linspace(0, 10, 100)
+u = np.ones([2, 100])
+u = u * 10
+
+# run simulation
+rez = m.sim(u, t)
+y = rez[1]
+\end{pycode}
+
+% fit model and dump results to file
+\begin{pycode}[model4]
+th0 = [0.9, 1.1] 
+
+
+fit = m.mle_fit(th0, t, u, y)
+
+yhat_true = m.yhat(t, u, y)
+yhat_est = m.yhat(t, u, y, fit.x)
+init_loss = m.lik(t, u, y, th0)
+
+rez = {'th0': th0, 'fit': fit, 'th_true': th, 'yhat_true': yhat_true,
+	'yhat_est': yhat_est, 't': t, 'init_loss': init_loss}
+
+filename = 'rez4.pkl'
+with open(filename, 'wb') as f:
+	# pytex.add_created(filename)
+	pickle.dump(rez, f)
+\end{pycode}
+
+% read fit results
+\begin{pycode}
+filename = 'rez4.pkl'
+pytex.add_dependencies(filename)
+ 
+with open(filename, 'rb') as f:
+	rez = pickle.load(f)
+
+th0 = np.matrix(rez['th0'])
+th0 = pylatex.Matrix(th0, mtype='b')
+th0 = th0.dumps()
+
+th = rez['fit']['x']
+th = np.matrix(th)
+th = np.around(th, 6)
+th = pylatex.Matrix(th, mtype='b')
+th = th.dumps()
+
+fit = rez['fit']
+
+th_true = rez['th_true']
+th_t = np.matrix(th_true)
+th_t = pylatex.Matrix(th_t, mtype='b')
+th_t = th_t.dumps()
+
+init_loss = rez['init_loss']
+\end{pycode}
+
+\bigskip \noindent
+Истинные значения параметров 
+\[
+	\theta^{*} = \pyc{print(th_t)}
+\]
+Начальное приближение 
+\[
+	\theta_{0} = \pyc{print(th0)}
+\]
+Начальное значение критерия
+\[
+	\chi(\theta_0) = \pyc{print("%.6f" % init_loss)}
+\]
+Найденные значения параметров
+\[
+	\hat{\theta} = \pyc{print(th)}
+\]
+Значение критерия
+\[
+	\chi(\hat{\theta}) = \pyc{print("%.6f" % fit.fun)}
+\]
+
+Относительная погрешность оценивания в пространстве параметров
+
+% compute fit relative tolerance
+\begin{pycode}
+th = rez['fit']['x']
+th_t = rez['th_true']
+rtol = np.linalg.norm(th_t - th) / np.linalg.norm(th_t)
+rtol_p = "%.3f" % (rtol * 100)
+\end{pycode}
+
+\[
+	\frac{||\theta^* -\ \hat{\theta}||}{||\theta^*||} = 
+		\pyc{print("%.6f" % rtol)}
+\]
+
+% prepare relative tolerance in response space for display
+\begin{pycode}
+yhat_true = rez['yhat_true']
+yhat_est = rez['yhat_est']
+
+rtoly = np.linalg.norm(yhat_true - yhat_est)
+rtolyp = "%.3f" % (rtoly * 100)
+\end{pycode}
+
+Относительная погрешность оценивания в пространстве откликов
+
+\[
+	\frac{||y^{*} -\ \hat{y}||}{|| y^{*} ||} = \pyc{print("%.6f" % rtoly)}
+\]
+
 
 \section*{Заключение}
 \addcontentsline{toc}{section}{Заключение}
