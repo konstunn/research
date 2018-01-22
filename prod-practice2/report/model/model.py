@@ -466,7 +466,7 @@ class Model(object):
         S = rez[2]
         S = S + N*m * 0.5 + np.log(2*math.pi)
 
-        return S
+        return S[0][0]
 
     def __L(self, th, t, u, y):
         return self.lik(t, u, y, th)
