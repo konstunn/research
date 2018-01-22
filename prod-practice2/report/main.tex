@@ -869,16 +869,18 @@ init_loss = m.lik(t, u, y, th0)
 rez = {'th0': th0, 'fit': fit, 'th_true': th, 'yhat_true': yhat_true,
 	'yhat_est': yhat_est, 't': t, 'init_loss': init_loss}
 
-with open('rez.pkl', 'wb') as f:
-	# pytex.add_created('rez.pkl')
+filename = 'rez.pkl'
+with open(filename, 'wb') as f:
+	# pytex.add_created(filename)
 	pickle.dump(rez, f)
 \end{pycode}
 
 % read fit results
 \begin{pycode}
-pytex.add_dependencies('rez.pkl')
+filename = 'rez.pkl'
+pytex.add_dependencies(filename)
 
-with open('rez.pkl', 'rb') as f:
+with open(filename, 'rb') as f:
 	rez = pickle.load(f)
 
 th0 = np.matrix(rez['th0'])
@@ -922,6 +924,7 @@ init_loss = rez['init_loss']
 \[
 	\chi(\hat{\theta}) = \pyc{print("%.6f" % fit.fun)}
 \]
+
 Относительная погрешность оценивания в пространстве параметров
 
 % compute fit relative tolerance
